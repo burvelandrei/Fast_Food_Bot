@@ -1,16 +1,26 @@
+import logging
+import logging.config
 import asyncio
 from environs import Env
 from aiohttp import client
 from services.auth import create_access_token
+from services.logger import logging_config
+
 
 env = Env()
 env.read_env()
 
 
+logging.config.dictConfig(logging_config)
+logger = logging.getLogger(__name__)
+
+
 class APIClient:
-    def __init__(self, access_token: str = None):
+    """Класс для зпаросов к апи"""
+
+    def __init__(self, tg_id: str):
         self.domain = f"http://{env('API_HOST')}:{env('API_PORT')}"
-        self.access_token = access_token
+        self.access_token = create_access_token(tg_id)
         self.headers = {"Content-Type": "application/json"}
         if self.access_token:
             self.headers["Authorization"] = f"Bearer {self.access_token}"
@@ -27,56 +37,35 @@ class APIClient:
         try:
             async with self.session.get(url) as response:
                 if response.status == 200:
-                    print(response.status)
-                    print(await response.json())
+                    logger.info(f"GET request successful: {response.status}")
+                    return await response.json()
                 else:
-                    print(f"Ошибка GET запроса - {response.status}")
+                    logger.error(f"GET request failed - Status: {response.status}")
         except client.ClientError as e:
-            print(f"Ошибка сети - {e}")
+            logger.error(f"Network error - {e}")
 
-    async def post(self, endpoint, data):
+    async def post(self, endpoint, data=None):
         url = self.domain + endpoint
         try:
             async with self.session.post(url, json=data) as response:
                 if response.status in {200, 201}:
-                    print(response.status)
-                    print(await response.json())
+                    logger.info(f"POST request successful: {response.status}")
+                    return await response.json()
                 else:
-                    print(
-                        f"Ошибка POST запроса - {response.status}, {await response.json()}"
+                    logger.error(
+                        f"POST request failed - Status: {response.status}, Response: {await response.json()}"
                     )
         except client.ClientError as e:
-            print(f"Ошибка сети - {e}")
+            logger.error(f"Network error - {e}")
 
     async def delete(self, endpoint):
         url = self.domain + endpoint
         try:
             async with self.session.delete(url) as response:
                 if response.status == 200:
-                    print(response.status)
-                    print(await response.json())
+                    logger.info(f"DELETE request successful: {response.status}")
+                    return await response.json()
                 else:
-                    print(f"Ошибка DELETE запроса - {response.status}")
+                    logger.error(f"DELETE request failed - Status: {response.status}")
         except client.ClientError as e:
-            print(f"Ошибка сети - {e}")
-
-
-async def main():
-    access_token = create_access_token("474528766")
-    async with APIClient(access_token=access_token) as api:
-        # await asyncio.create_task(api.get("/products"))
-        # await asyncio.create_task(
-        #     api.post(
-        #         "/users/register",
-        #         data={
-        #             "email": "burvelandrei@gmail.com",
-        #             "tg_id": "474528766",
-        #         },
-        #     )
-        # )
-
-        await api.post("/carts/add", {"product_id": 1, "quantity": 1})
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+            logger.error(f"Network error - {e}")
