@@ -17,20 +17,32 @@ class UserDO:
     model = User
 
     @classmethod
-    async def get_by_id(cls, session: AsyncSession, id: int):
-        """Получить элементы по id или вернуть None если нет"""
-        logger.info(f"Fetching {cls.model.__name__} with id {id}")
-        query = select(cls.model).where(cls.model.id == id)
-        result = await session.execute(query)
-        return result.scalar_one_or_none()
+    async def get_by_email(cls, email: str, session: AsyncSession):
+        """Получить элементы user по email"""
+        try:
+            logger.info(f"Fetching User by email")
+            query = select(cls.model).where(cls.model.email == email)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logger.error(
+                f"An error occurred while fetching User by email: {e}",
+            )
+            raise e
 
     @classmethod
     async def get_by_tg_id(cls, tg_id: str, session: AsyncSession):
         """Получить элементы user по tg_id"""
-        logger.info(f"Fetching User by Telegram ID")
-        query = select(cls.model).where(cls.model.tg_id == tg_id)
-        result = await session.execute(query)
-        return result.scalar_one_or_none()
+        try:
+            logger.info(f"Fetching User by Telegram ID")
+            query = select(cls.model).where(cls.model.tg_id == tg_id)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logger.error(
+                f"An error occurred while fetching User by Telegram ID: {e}",
+            )
+            raise e
 
     @classmethod
     async def add(cls, session: AsyncSession, **values):
