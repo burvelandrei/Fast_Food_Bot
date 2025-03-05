@@ -18,12 +18,13 @@ logger = logging.getLogger(__name__)
 class APIClient:
     """Класс для зпаросов к апи"""
 
-    def __init__(self, tg_id: str):
+    def __init__(self, email: str = None):
         self.domain = f"http://{env('API_HOST')}:{env('API_PORT')}"
-        self.access_token = create_access_token(tg_id)
         self.headers = {"Content-Type": "application/json"}
-        if self.access_token:
+        if email:
+            self.access_token = create_access_token(email)
             self.headers["Authorization"] = f"Bearer {self.access_token}"
+
 
     async def __aenter__(self):
         self.session = client.ClientSession(headers=self.headers)
@@ -41,6 +42,7 @@ class APIClient:
                     return await response.json()
                 else:
                     logger.error(f"GET request failed - Status: {response.status}")
+                    return None
         except client.ClientError as e:
             logger.error(f"Network error - {e}")
 
@@ -55,6 +57,7 @@ class APIClient:
                     logger.error(
                         f"POST request failed - Status: {response.status}, Response: {await response.json()}"
                     )
+                    return None
         except client.ClientError as e:
             logger.error(f"Network error - {e}")
 
