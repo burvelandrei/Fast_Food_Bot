@@ -25,7 +25,6 @@ class APIClient:
             self.access_token = create_access_token(email)
             self.headers["Authorization"] = f"Bearer {self.access_token}"
 
-
     async def __aenter__(self):
         self.session = client.ClientSession(headers=self.headers)
         return self
