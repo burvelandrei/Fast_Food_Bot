@@ -7,6 +7,10 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram_dialog import setup_dialogs
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from services.logger import logging_config
+from handlers import start_handler
+from dialogs import start_dialog, menu_dialog, products_dialog
+from db.connect import AsyncSessionLocal
+from middlewares import DBSessionMiddleware
 
 
 env = Env()
@@ -30,9 +34,13 @@ async def main() -> None:
         key_builder=DefaultKeyBuilder(with_destiny=True),
     )
     dp: Dispatcher = Dispatcher(storage=storage)
+    dp.update.middleware(DBSessionMiddleware(AsyncSessionLocal))
 
     # Регистриуем роутеры в диспетчере
-    dp.include_router()
+    dp.include_router(start_handler.router)
+    dp.include_router(start_dialog.dialog)
+    dp.include_router(menu_dialog.dialog)
+    dp.include_router(products_dialog.dialog)
     setup_dialogs(dp)
 
     # Пропускаем накопившиеся апдейты и запускаем polling

@@ -1,7 +1,14 @@
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import Button, SwitchTo, Select, Cancel, ScrollingGroup
+from aiogram_dialog.widgets.kbd import (
+    Button,
+    SwitchTo,
+    Select,
+    Cancel,
+    ScrollingGroup,
+    Group,
+)
 from aiogram_dialog.widgets.media import StaticMedia
 from environs import Env
 from states import ProductsState
@@ -67,7 +74,7 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
         check_image = product_detail["image_url"]
         image_url = None
         if check_image:
-            image_url = f"{env("S3_HOST")}{product_detail["image_url"]}"
+            image_url = f"{env('S3_HOST')}{env('S3_BACKET')}{product_detail['image_url']}"
         return {
             "name": product_detail["name"],
             "description": product_detail["description"],
@@ -94,12 +101,30 @@ catgories_window = Window(
 
 products_window = Window(
     Const("Продукт"),
-    Select(
-        Format("{item[name]}"),
-        id="products_button",
-        item_id_getter=lambda x: x["id"],
-        items="products",
-        on_click=product_button,
+    ScrollingGroup(
+        Select(
+            Format("{item[name]}"),
+            id="products_button",
+            item_id_getter=lambda x: x["id"],
+            items="products",
+            on_click=product_button,
+        ),
+        id="scroll_menu",
+        width=1,
+        height=5,
+        when=lambda data, *_: len(data["products"]) > 5,
+    ),
+    Group(
+        Select(
+            Format("{item[name]}"),
+            id="products_button",
+            item_id_getter=lambda x: x["id"],
+            items="products",
+            on_click=product_button,
+        ),
+        id="select_menu",
+        width=1,
+        when=lambda data, *_: len(data["products"]) <= 5,
     ),
     SwitchTo(
         text=Const("🔙 Назад"),
