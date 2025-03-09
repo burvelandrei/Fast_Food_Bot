@@ -1,4 +1,4 @@
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.kbd import (
@@ -20,6 +20,7 @@ env = Env()
 env.read_env()
 
 
+# Хэндлер обработки выбранной категории
 async def category_button(
     callback: CallbackQuery,
     widget: Select,
@@ -30,6 +31,7 @@ async def category_button(
     await dialog_manager.switch_to(state=ProductsSG.products)
 
 
+# Хэндлер обработки выбранного продукта
 async def product_button(
     callback: CallbackQuery,
     widget: Select,
@@ -40,26 +42,37 @@ async def product_button(
     await dialog_manager.switch_to(state=ProductsSG.product_detail)
 
 
+# Хэндлер для добавления продукта в корзину
 async def add_to_cart_button(
     callback: CallbackQuery,
-    widget: Select,
+    widget: Button,
     dialog_manager: DialogManager,
 ):
     tg_id = str(callback.from_user.id)
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     product_id = dialog_manager.dialog_data["product_id"]
+    product_name = dialog_manager.dialog_data["product_name"]
+    data = {
+        "product_id": product_id,
+        "quantity": 1,
+    }
     async with APIClient(user.email) as api:
-        await api.post("/carts/add/", data={"product_id": product_id, "quantity": 1})
-    await callback.answer("Добавлено в корзину")
+        await api.post(
+            "/carts/add/",
+            data=data,
+        )
+    await callback.answer(f"{product_name} добавлен(а) в корзину")
 
 
+# Геттер для получения всех категорий и передаче в окно
 async def categories_getter(dialog_manager: DialogManager, **kwargs):
     async with APIClient() as api:
         categories = await api.get("/category/")
         return {"categories": categories}
 
 
+# Геттер для получения всех продуктов этой категории и передаче в окно
 async def products_getter(dialog_manager: DialogManager, **kwargs):
     category_id = dialog_manager.dialog_data["category_id"]
     async with APIClient() as api:
@@ -67,31 +80,56 @@ async def products_getter(dialog_manager: DialogManager, **kwargs):
         return {"products": products}
 
 
+# Гетер для получения информации о продукте и передаче в окно
 async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
     product_id = dialog_manager.dialog_data["product_id"]
     async with APIClient() as api:
         product_detail = await api.get(f"/products/{product_id}/")
-        check_image = product_detail["image_url"]
-        image_url = None
+        dialog_manager.dialog_data["product_name"] = product_detail["name"]
+        check_image = product_detail["photo_url"]
+        photo_s3_url = None
         if check_image:
-            image_url = f"{env('S3_HOST')}{env('S3_BACKET')}{product_detail['image_url']}"
+            photo_s3_url = (
+                f"{env('S3_HOST')}{env('S3_BACKET')}{product_detail['photo_url']}"
+            )
         return {
             "name": product_detail["name"],
             "description": product_detail["description"],
             "price": product_detail["final_price"],
-            "image_url": image_url,
+            "photo_s3_url": photo_s3_url,
             "check_image": check_image,
         }
 
 
+# Окно отображения всех категорий
 catgories_window = Window(
     Const("Категории"),
-    Select(
-        Format("{item[name]}"),
-        id="categories_button",
-        item_id_getter=lambda x: x["id"],
-        items="categories",
-        on_click=category_button,
+    # если категорий больше 5, отображем виджет с пагинацией
+    ScrollingGroup(
+        Select(
+            Format("{item[name]}"),
+            id="categories_button",
+            item_id_getter=lambda x: x["id"],
+            items="categories",
+            on_click=category_button,
+        ),
+        id="categories_scroll_menu",
+        width=1,
+        height=1,
+        when=lambda data, *_: len(data["categories"]) > 5,
+    ),
+    # если категорий меньше 5, отображем виджет без пагинации
+    Group(
+        Select(
+            Format("{item[name]}"),
+            id="categories_button",
+            item_id_getter=lambda x: x["id"],
+            items="categories",
+            on_click=category_button,
+        ),
+        id="categories_list_menu",
+        width=1,
+        when=lambda data, *_: len(data["categories"]) <= 5,
     ),
     Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
     getter=categories_getter,
@@ -99,8 +137,10 @@ catgories_window = Window(
 )
 
 
+# Окно отображения всех продуктов по категории
 products_window = Window(
-    Const("Продукт"),
+    Const("Продукты"),
+    # если продуктов больше 5, отображем виджет с пагинацией
     ScrollingGroup(
         Select(
             Format("{item[name]}"),
@@ -109,11 +149,12 @@ products_window = Window(
             items="products",
             on_click=product_button,
         ),
-        id="scroll_menu",
+        id="scroll_list_menu",
         width=1,
         height=5,
         when=lambda data, *_: len(data["products"]) > 5,
     ),
+    # если продуктов меньше 5, отображем виджет без пагинации
     Group(
         Select(
             Format("{item[name]}"),
@@ -122,7 +163,7 @@ products_window = Window(
             items="products",
             on_click=product_button,
         ),
-        id="select_menu",
+        id="products_list_menu",
         width=1,
         when=lambda data, *_: len(data["products"]) <= 5,
     ),
@@ -137,8 +178,9 @@ products_window = Window(
 )
 
 
+# Окно отображения инфо о продукте
 product_detail_window = Window(
-    StaticMedia(url=Format("{image_url}"), when="check_image"),
+    StaticMedia(url=Format("{photo_s3_url}"), when="check_image"),
     Format("Наименование: {name}"),
     Format("Описание: {description}", when="description"),
     Format("Цена: {price}"),
@@ -156,5 +198,6 @@ product_detail_window = Window(
     getter=product_detail_getter,
     state=ProductsSG.product_detail,
 )
+
 
 dialog = Dialog(catgories_window, products_window, product_detail_window)
