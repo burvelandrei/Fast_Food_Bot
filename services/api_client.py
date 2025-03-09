@@ -4,7 +4,7 @@ import asyncio
 from environs import Env
 from aiohttp import client
 from services.auth import create_access_token
-from services.logger import logging_config
+from utils.logger import logging_config
 
 
 env = Env()

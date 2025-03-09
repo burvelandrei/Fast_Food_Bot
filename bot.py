@@ -6,11 +6,11 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram_dialog import setup_dialogs
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
-from services.logger import logging_config
+from utils.logger import logging_config
 from handlers import start_handler
 from dialogs import start_dialog, menu_dialog, products_dialog
 from db.connect import AsyncSessionLocal
-from middlewares import DBSessionMiddleware
+from utils.middlewares import DBSessionMiddleware
 
 
 env = Env()
