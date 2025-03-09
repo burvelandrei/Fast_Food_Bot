@@ -4,7 +4,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.kbd import Button, SwitchTo, Start
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
 from email_validator import validate_email, EmailNotValidError
-from states import StartState, MenuState, ProductsState
+from dialogs.states import StartState, MenuSG, ProductsSG
 from services.api_client import APIClient
 
 
@@ -13,9 +13,9 @@ menu_window = Window(
     Start(
         Const("Список продуктов"),
         id="list_productds",
-        state=ProductsState.categories,
+        state=ProductsSG.categories,
     ),
-    state=MenuState.menu,
+    state=MenuSG.menu,
 )
 
 

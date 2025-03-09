@@ -3,7 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart
 from aiogram_dialog import DialogManager, StartMode
 from sqlalchemy.ext.asyncio import AsyncSession
-from states import StartState, MenuState
+from dialogs.states import StartSG, MenuSG
 from db.operations import UserDO
 
 router = Router()
@@ -14,6 +14,6 @@ router = Router()
 async def start(message: Message, dialog_manager: DialogManager, session: AsyncSession):
     db_user = await UserDO.get_by_tg_id(tg_id=str(message.from_user.id), session=session)
     if db_user:
-        await dialog_manager.start(state=MenuState.menu, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(state=MenuSG.menu, mode=StartMode.RESET_STACK)
     else:
-        await dialog_manager.start(state=StartState.start, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(state=StartSG.start, mode=StartMode.RESET_STACK)

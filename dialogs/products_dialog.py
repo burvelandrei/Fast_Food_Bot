@@ -11,7 +11,7 @@ from aiogram_dialog.widgets.kbd import (
 )
 from aiogram_dialog.widgets.media import StaticMedia
 from environs import Env
-from states import ProductsState
+from dialogs.states import ProductsSG
 from services.api_client import APIClient
 from db.operations import UserDO
 
@@ -27,7 +27,7 @@ async def category_button(
     item_id: str,
 ):
     dialog_manager.dialog_data["category_id"] = item_id
-    await dialog_manager.switch_to(state=ProductsState.products)
+    await dialog_manager.switch_to(state=ProductsSG.products)
 
 
 async def product_button(
@@ -37,7 +37,7 @@ async def product_button(
     item_id: str,
 ):
     dialog_manager.dialog_data["product_id"] = item_id
-    await dialog_manager.switch_to(state=ProductsState.product_detail)
+    await dialog_manager.switch_to(state=ProductsSG.product_detail)
 
 
 async def add_to_cart_button(
@@ -95,7 +95,7 @@ catgories_window = Window(
     ),
     Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
     getter=categories_getter,
-    state=ProductsState.categories,
+    state=ProductsSG.categories,
 )
 
 
@@ -129,11 +129,11 @@ products_window = Window(
     SwitchTo(
         text=Const("🔙 Назад"),
         id="back_to_category",
-        state=ProductsState.categories,
+        state=ProductsSG.categories,
     ),
     Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
     getter=products_getter,
-    state=ProductsState.products,
+    state=ProductsSG.products,
 )
 
 
@@ -150,11 +150,11 @@ product_detail_window = Window(
     SwitchTo(
         text=Const("🔙 Назад"),
         id="back_to_products",
-        state=ProductsState.products,
+        state=ProductsSG.products,
     ),
     Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
     getter=product_detail_getter,
-    state=ProductsState.product_detail,
+    state=ProductsSG.product_detail,
 )
 
 dialog = Dialog(catgories_window, products_window, product_detail_window)

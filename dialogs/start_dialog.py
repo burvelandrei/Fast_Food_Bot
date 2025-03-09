@@ -3,7 +3,7 @@ from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
 from email_validator import validate_email, EmailNotValidError
-from states import StartState, MenuState
+from dialogs.states import StartSG, MenuSG
 from services.api_client import APIClient
 from db.operations import UserDO
 
@@ -30,12 +30,12 @@ async def correct_email(
     db_user = UserDO.get_by_email(email=text, session=session)
     if db_user:
         await message.answer("Пользователь с такой почтой уже присутствует!")
-        await dialog_manager.switch_to(state=StartState.start)
+        await dialog_manager.switch_to(state=StartSG.start)
     else:
         async with APIClient() as api:
             result = await api.post("/users/register/", data=data)
             await UserDO.add(session=session, **{"tg_id": tg_id, "email": text})
-            await dialog_manager.start(state=MenuState.menu)
+            await dialog_manager.start(state=MenuSG.menu)
 
 
 # Хэндлер для обработки невалидного email
@@ -43,7 +43,7 @@ async def incorrect_email(
     message: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str
 ):
     await message.answer("Введена некорректная почта!")
-    await dialog_manager.switch_to(state=StartState.start)
+    await dialog_manager.switch_to(state=StartSG.start)
 
 
 start_window = Window(
@@ -54,7 +54,7 @@ start_window = Window(
         on_success=correct_email,
         on_error=incorrect_email,
     ),
-    state=StartState.start,
+    state=StartSG.start,
 )
 
 
