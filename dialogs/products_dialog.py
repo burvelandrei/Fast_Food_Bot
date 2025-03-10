@@ -115,7 +115,7 @@ catgories_window = Window(
         ),
         id="categories_scroll_menu",
         width=1,
-        height=1,
+        height=5,
         when=lambda data, *_: len(data["categories"]) > 5,
     ),
     # если категорий меньше 5, отображем виджет без пагинации
