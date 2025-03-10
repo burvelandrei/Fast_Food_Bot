@@ -4,6 +4,7 @@ from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format, Case, List
 from aiogram_dialog.widgets.kbd import (
     SwitchTo,
+    Button,
     Select,
     Cancel,
     ScrollingGroup,
@@ -30,6 +31,23 @@ async def order_button(
 ):
     dialog_manager.dialog_data["order_id"] = item_id
     await dialog_manager.switch_to(state=OrdersSG.order_detail)
+
+
+# Хэндлер для повтора заказа и добавления в корзину
+async def repeat_order(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+):
+    order_id = dialog_manager.dialog_data["order_id"]
+    tg_id = str(dialog_manager.event.from_user.id)
+    session = dialog_manager.middleware_data["session"]
+    user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
+
+    try:
+        async with APIClient(user.email) as api:
+            await api.post(f"/orders/repeat/{order_id}/")
+            await callback.answer("Товары из заказа добавлены в корзину!")
+    except APIError:
+        await callback.answer("Ошибка при добавлении товаров в корзину.")
 
 
 # Геттер для получения списка заказов и передачи в окно
@@ -130,6 +148,11 @@ order_detail_window = Window(
         items="order_items",
     ),
     Format("\n💰  Итоговая сумма: {total_amount} руб."),
+    Button(
+        text=Const("🔄 Повторить заказ"),
+        id="repeat_order",
+        on_click=repeat_order,
+    ),
     SwitchTo(
         text=Const("🔙 Назад"),
         id="back_to_history_orders",
