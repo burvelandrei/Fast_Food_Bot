@@ -38,12 +38,13 @@ class APIClient:
             async with self.session.get(url) as response:
                 if response.status == 200:
                     logger.info(f"GET request successful: {response.status}")
-                    return await response.json()
+                    return {"success": True, "data": await response.json()}
                 else:
                     logger.error(f"GET request failed - Status: {response.status}")
-                    return None
+                    return {"success": False}
         except client.ClientError as e:
             logger.error(f"Network error - {e}")
+            return {"success": False}
 
     async def post(self, endpoint, data=None):
         url = self.domain + endpoint
@@ -51,14 +52,15 @@ class APIClient:
             async with self.session.post(url, json=data) as response:
                 if response.status in {200, 201}:
                     logger.info(f"POST request successful: {response.status}")
-                    return await response.json()
+                    return {"success": True, "data": await response.json()}
                 else:
                     logger.error(
                         f"POST request failed - Status: {response.status}, Response: {await response.json()}"
                     )
-                    return None
+                    return {"success": False}
         except client.ClientError as e:
             logger.error(f"Network error - {e}")
+            return {"success": False}
 
     async def delete(self, endpoint):
         url = self.domain + endpoint
@@ -66,8 +68,10 @@ class APIClient:
             async with self.session.delete(url) as response:
                 if response.status == 200:
                     logger.info(f"DELETE request successful: {response.status}")
-                    return await response.json()
+                    return {"success": True, "data": await response.json()}
                 else:
                     logger.error(f"DELETE request failed - Status: {response.status}")
+                    return {"success": False}
         except client.ClientError as e:
             logger.error(f"Network error - {e}")
+            return {"success": False}
