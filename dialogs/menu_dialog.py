@@ -5,19 +5,19 @@ from dialogs.states import MenuSG, ProductsSG, OrdersSG, CartsSG
 
 
 menu_window = Window(
-    Const("Меню"),
+    Const("📋 Меню"),
     Start(
-        Const("Список продуктов"),
+        Const("🍔 Список продуктов"),
         id="products",
         state=ProductsSG.categories,
     ),
     Start(
-        Const("Корзина"),
+        Const("🛒 Корзина"),
         id="carts",
         state=CartsSG.carts,
     ),
     Start(
-        Const("История заказов"),
+        Const("📜 История заказов"),
         id="history_orders",
         state=OrdersSG.orders,
     ),

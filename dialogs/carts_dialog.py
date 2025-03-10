@@ -184,7 +184,7 @@ carts_window = Window(
     # если продуктов корзине нет, выводим то что нет продуктов
     Case(
         {
-            "True": Format("У вас пока нет продуктов в корзине 😔"),
+            "True": Format("Пока тут пусто 😔"),
             "False": Multi(
                 Format("🛒 Ваша корзина:"),
                 Format("💰 Общая сумма корзины: {total_amount} руб."),
@@ -243,8 +243,8 @@ carts_window = Window(
 
 cart_item_window = Window(
     StaticMedia(url=Format("{photo_s3_url}"), when="check_image"),
-    Format("Наименование: {name}"),
-    Format("Общая цена: {total_price}"),
+    Format("🏷️ Наименование: {name}"),
+    Format("💰 Общая цена: {total_price} руб."),
     Group(
         Button(
             Const("➖"),

@@ -26,7 +26,7 @@ async def order_button(
     callback: CallbackQuery,
     widget: Select,
     dialog_manager: DialogManager,
-    item_id: str,
+    item_id: int,
 ):
     dialog_manager.dialog_data["order_id"] = item_id
     await dialog_manager.switch_to(state=OrdersSG.order_detail)
@@ -67,14 +67,14 @@ history_orders_window = Window(
     Case(
         {
             "True": Format("У вас пока нет заказов 😔"),
-            "False": Format("Выберите заказ для просмотра:"),
+            "False": Format("📋 Выберите заказ для просмотра:"),
         },
         selector=lambda data, *_: str(not bool(data["orders"])),
     ),
     # если заказов больше 5 выводим меню с пагинацией
     ScrollingGroup(
         Select(
-            Format("Заказ {item[id]} от {item[created_at]}"),
+            Format("📦 Заказ №{item[id]} от {item[created_at]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -88,7 +88,7 @@ history_orders_window = Window(
     # если заказов меньше либо равно 5 выводим обычный список кнопок
     Group(
         Select(
-            Format("Заказ {item[id]} от {item[created_at]}"),
+            Format("📦 Заказ №{item[id]} от {item[created_at]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -105,12 +105,14 @@ history_orders_window = Window(
 
 # Окно отображения информации о заказе
 order_detail_window = Window(
-    Format("Заказ {id} от {created_at}"),
+    Format("📦 Заказ №{id}"),
+    Format("📅 Дата: {created_at}\n"),
+    Format("📜 Состав заказа:"),
     List(
-        Format("{item[name]} - {item[quantity]} - {item[total_price]}"),
+        Format("- {item[name]} x {item[quantity]}  |  {item[total_price]} руб."),
         items="order_items",
     ),
-    Format("Сумма заказа {total_amount}"),
+    Format("\n💰  Итоговая сумма: {total_amount} руб."),
     SwitchTo(
         text=Const("🔙 Назад"),
         id="back_to_history_orders",
