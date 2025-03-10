@@ -1,19 +1,15 @@
 from datetime import datetime
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format, Case, List
 from aiogram_dialog.widgets.kbd import (
-    Button,
     SwitchTo,
-    Start,
     Select,
     Cancel,
     ScrollingGroup,
     Group,
 )
-from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
-from email_validator import validate_email, EmailNotValidError
-from dialogs.states import MenuSG, ProductsSG, OrdersSG
+from dialogs.states import OrdersSG
 from services.api_client import APIClient
 from db.operations import UserDO
 
