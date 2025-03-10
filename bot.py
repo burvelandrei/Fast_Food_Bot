@@ -8,7 +8,13 @@ from aiogram_dialog import setup_dialogs
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from utils.logger import logging_config
 from handlers import start_handler
-from dialogs import start_dialog, menu_dialog, products_dialog
+from dialogs import (
+    start_dialog,
+    menu_dialog,
+    products_dialog,
+    orders_dialog,
+    carts_dialog,
+)
 from db.connect import AsyncSessionLocal
 from utils.middlewares import DBSessionMiddleware
 
@@ -41,6 +47,8 @@ async def main() -> None:
     dp.include_router(start_dialog.dialog)
     dp.include_router(menu_dialog.dialog)
     dp.include_router(products_dialog.dialog)
+    dp.include_router(carts_dialog.dialog)
+    dp.include_router(orders_dialog.dialog)
     setup_dialogs(dp)
 
     # Пропускаем накопившиеся апдейты и запускаем polling

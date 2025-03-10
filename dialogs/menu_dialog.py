@@ -1,19 +1,25 @@
-from aiogram.types import Message
-from aiogram_dialog import DialogManager, Dialog, Window
-from aiogram_dialog.widgets.text import Const, Format
-from aiogram_dialog.widgets.kbd import Button, SwitchTo, Start
-from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
-from email_validator import validate_email, EmailNotValidError
-from dialogs.states import MenuSG, ProductsSG
-from services.api_client import APIClient
+from aiogram_dialog import Dialog, Window
+from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.kbd import Start
+from dialogs.states import MenuSG, ProductsSG, OrdersSG, CartsSG
 
 
 menu_window = Window(
     Const("Меню"),
     Start(
         Const("Список продуктов"),
-        id="list_productds",
+        id="products",
         state=ProductsSG.categories,
+    ),
+    Start(
+        Const("Корзина"),
+        id="carts",
+        state=CartsSG.carts,
+    ),
+    Start(
+        Const("История заказов"),
+        id="history_orders",
+        state=OrdersSG.orders,
     ),
     state=MenuSG.menu,
 )
