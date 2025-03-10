@@ -38,11 +38,16 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     async with APIClient(user.email) as api:
-        orders = await api.get("/orders/")
-        for order in orders:
-            created_at = order.get("created_at")
-            order["created_at"] = formatted_date(created_at)
-        return {"orders": orders or []}
+        response = await api.get("/orders/")
+        if response["success"]:
+            orders = response["data"]
+            for order in orders:
+                created_at = order.get("created_at")
+                order["created_at"] = formatted_date(created_at)
+        else:
+            orders = None
+        error_message = "История заказов временно недоступна." if not orders else None
+        return {"orders": orders, "error_message": error_message}
 
 
 # Геттер для получения заказа по id и передачи в окно
@@ -52,13 +57,22 @@ async def order_detail_getter(dialog_manager: DialogManager, **kwargs):
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     async with APIClient(user.email) as api:
-        order = await api.get(f"/orders/{order_id}/")
-        return {
-            "id": order["id"],
-            "order_items": order["order_items"],
-            "created_at": formatted_date(order["created_at"]),
-            "total_amount": order["total_amount"],
-        }
+        response = await api.get(f"/orders/{order_id}/")
+        if response["success"]:
+            order = response["data"]
+            return {
+                "id": order["id"],
+                "order_items": order["order_items"],
+                "created_at": formatted_date(order["created_at"]),
+                "total_amount": order["total_amount"],
+            }
+        else:
+            return {
+                "id": "Информация о заказе временно недоступна",
+                "order_items": [],
+                "created_at": "-",
+                "total_amount": 0,
+            }
 
 
 # Окно отображения всех заказаов пользователя
@@ -70,7 +84,9 @@ history_orders_window = Window(
             "False": Format("📋 Выберите заказ для просмотра:"),
         },
         selector=lambda data, *_: str(not bool(data["orders"])),
+        when=lambda data, *_: data["orders"] is not None,
     ),
+    Format("{error_message}", when="error_message"),
     # если заказов больше 5 выводим меню с пагинацией
     ScrollingGroup(
         Select(
@@ -83,7 +99,7 @@ history_orders_window = Window(
         id="orders_scroll",
         width=1,
         height=5,
-        when=lambda data, *_: len(data["orders"]) > 5,
+        when=lambda data, *_: data["orders"] and len(data["orders"]) > 5,
     ),
     # если заказов меньше либо равно 5 выводим обычный список кнопок
     Group(
@@ -95,7 +111,7 @@ history_orders_window = Window(
             on_click=order_button,
         ),
         width=1,
-        when=lambda data, *_: len(data["orders"]) <= 5,
+        when=lambda data, *_: data["orders"] and len(data["orders"]) <= 5,
     ),
     Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
     getter=history_orders_getter,
@@ -109,7 +125,7 @@ order_detail_window = Window(
     Format("📅 Дата: {created_at}\n"),
     Format("📜 Состав заказа:"),
     List(
-        Format("- {item[name]} x {item[quantity]}  |  {item[total_price]} руб."),
+        Format("- {item[name]} x {item[quantity]} шт. |  {item[total_price]} руб."),
         items="order_items",
     ),
     Format("\n💰  Итоговая сумма: {total_amount} руб."),
