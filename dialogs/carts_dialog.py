@@ -27,10 +27,14 @@ async def clear_cart(
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     async with APIClient(user.email) as api:
-        await api.delete("/carts/")
-    # Очищаем кэш
-    dialog_manager.dialog_data.clear()
-    await dialog_manager.update({})
+        response = await api.delete("/carts/")
+        if response["success"]:
+            dialog_manager.dialog_data.clear()
+            await dialog_manager.update({})
+            await callback.answer("Корзина очищена 🧹")
+        else:
+            error_message = "Произошла ошибка при очистке корзины."
+            await callback.answer(f"⚠️ Ошибка: {error_message}")
 
 
 # Хэндлер кнопки оформления заказа
@@ -41,9 +45,12 @@ async def confirmation_order(
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     async with APIClient(user.email) as api:
-        result = await api.post("/orders/confirmation/")
-        if result:
-            await callback.answer("Заказ оформлен")
+        response = await api.post("/orders/confirmation/")
+        if response["success"]:
+            await callback.answer("Заказ успешно оформлен 🎉")
+        else:
+            error_message = "Не удалось оформить заказ."
+            await callback.answer(f"⚠️ Ошибка: {error_message}")
 
 
 # Хэндлер обработки нажатия кнопки продукта из корзины
@@ -54,19 +61,26 @@ async def cart_item_button(
     item_id: int,
 ):
     dialog_manager.dialog_data["product_id"] = item_id
-    # запрашиваем данные при первом открытии и кэшируем
     if "cart_item_data" not in dialog_manager.dialog_data:
         tg_id = str(dialog_manager.event.from_user.id)
         session = dialog_manager.middleware_data["session"]
         user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
         async with APIClient(user.email) as api:
-            cart_item = await api.get(f"/carts/{item_id}/")
-            dialog_manager.dialog_data["cart_item_data"] = cart_item
-            dialog_manager.dialog_data["quantity"] = cart_item["quantity"]
-            dialog_manager.dialog_data["total_price"] = float(cart_item["total_price"])
-            dialog_manager.dialog_data["price_product"] = float(
-                cart_item["product"]["final_price"]
-            )
+            response = await api.get(f"/carts/{item_id}/")
+
+            if response["success"]:
+                dialog_manager.dialog_data["cart_item_data"] = response["data"]
+                dialog_manager.dialog_data["quantity"] = response["data"]["quantity"]
+                dialog_manager.dialog_data["total_price"] = float(
+                    response["data"]["total_price"]
+                )
+                dialog_manager.dialog_data["price_product"] = float(
+                    response["data"]["product"]["final_price"]
+                )
+            else:
+                await callback.answer("⚠️ Не удалось загрузить информацию о продукте.")
+                return
+
     await dialog_manager.switch_to(state=CartsSG.cart_item)
 
 
@@ -104,14 +118,16 @@ async def update_quantity(
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     quantity = dialog_manager.dialog_data.get("quantity")
     data = {"product_id": product_id, "quantity": quantity}
-    # Отправляем финальные изменения на сервер
     async with APIClient(user.email) as api:
-        await api.post("/carts/update/", data=data)
-    # Обновляем кэш
-    async with APIClient(user.email) as api:
-        cart_item = await api.get(f"/carts/{product_id}/")
-        dialog_manager.dialog_data["cart_item_data"] = cart_item
-    await dialog_manager.update({})
+        response = await api.post("/carts/update/", data=data)
+        if response["success"]:
+            response = await api.get(f"/carts/{product_id}/")
+            dialog_manager.dialog_data["cart_item_data"] = response["data"]
+            await callback.answer("Количество продукта обновлено")
+            await dialog_manager.update({})
+        else:
+            error_message = "Не удалось обновить количество."
+            await callback.answer(f"⚠️ Ошибка: {error_message}")
 
 
 # Хэндлер кнопки удаления продукта из корзины
@@ -123,15 +139,19 @@ async def delete_cart_item(
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     async with APIClient(user.email) as api:
-        await api.delete(f"/carts/{product_id}/")
-    # Очищаем данные в кэше
-    if "cart_item_data" in dialog_manager.dialog_data:
-        del dialog_manager.dialog_data["cart_item_data"]
-    if "quantity" in dialog_manager.dialog_data:
-        del dialog_manager.dialog_data["quantity"]
-    if "total_price" in dialog_manager.dialog_data:
-        del dialog_manager.dialog_data["total_price"]
-    await dialog_manager.switch_to(state=CartsSG.carts)
+        response = await api.delete(f"/carts/{product_id}/")
+        if response["success"]:
+            if "cart_item_data" in dialog_manager.dialog_data:
+                del dialog_manager.dialog_data["cart_item_data"]
+            if "quantity" in dialog_manager.dialog_data:
+                del dialog_manager.dialog_data["quantity"]
+            if "total_price" in dialog_manager.dialog_data:
+                del dialog_manager.dialog_data["total_price"]
+            await dialog_manager.switch_to(state=CartsSG.carts)
+            await callback.answer("Продукт удален из корзины 🗑️")
+        else:
+            error_message = "Не удалось удалить продукт."
+            await callback.answer(f"⚠️ Ошибка: {error_message}")
 
 
 # Хэндлер кнопки назад в корзину
@@ -154,11 +174,23 @@ async def carts_getter(dialog_manager: DialogManager, **kwargs):
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     async with APIClient(user.email) as api:
-        carts = await api.get("/carts/")
-        return {
-            "total_amount": carts["total_amount"],
-            "cart_items": carts["cart_items"],
-        }
+        response = await api.get("/carts/")
+        if response["success"]:
+            carts = response["data"]
+            return {
+                "total_amount": carts["total_amount"],
+                "cart_items": carts["cart_items"],
+            }
+        else:
+            cart_items = None
+            error_message = (
+                "Не удалось загрузить данные корзины." if not cart_items else None
+            )
+            return {
+                "total_amount": 0,
+                "cart_items": cart_items,
+                "error_message": error_message,
+            }
 
 
 # Гетер получения данных продукта из корзины и передачи в окно
@@ -192,7 +224,9 @@ carts_window = Window(
             ),
         },
         selector=lambda data, *_: str(not bool(data["cart_items"])),
+        when=lambda data, *_: data["cart_items"] is not None,
     ),
+    Format("{error_message}", when="error_message"),
     # если продуктов в корзине больше 5, выводим меню с пагинацией
     ScrollingGroup(
         Select(
@@ -205,19 +239,19 @@ carts_window = Window(
         id="carts_scroll",
         width=1,
         height=5,
-        when=lambda data, *_: len(data["cart_items"]) > 5,
+        when=lambda data, *_: data["cart_items"] and len(data["cart_items"]) > 5,
     ),
     # если продуктов в корзине меньше или равно 5, выводим меню с списком
     Group(
         Select(
-            Format("{item[product][name]} - {item[quantity]}"),
+            Format("{item[product][name]} х {item[quantity]}шт."),
             id="cart_button",
             item_id_getter=lambda x: x["product"]["id"],
             items="cart_items",
             on_click=cart_item_button,
         ),
         width=1,
-        when=lambda data, *_: len(data["cart_items"]) <= 5,
+        when=lambda data, *_: data["cart_items"] and len(data["cart_items"]) <= 5,
     ),
     # кнопки Очистить корзину и Оформить заказ выводятся только если есть элементы в корзине
     Button(

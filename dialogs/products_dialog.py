@@ -1,6 +1,6 @@
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, Dialog, Window
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Multi
 from aiogram_dialog.widgets.kbd import (
     Button,
     SwitchTo,
@@ -56,10 +56,8 @@ async def add_to_cart_button(
         "product_id": product_id,
         "quantity": 1,
     }
-
     async with APIClient(user.email) as api:
         response = await api.post("/carts/add/", data=data)
-
     if response["success"]:
         await callback.answer(f"{product_name} добавлен(а) в корзину ✅")
     else:
@@ -125,8 +123,7 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
         }
 
 
-from aiogram_dialog.widgets.text import Multi
-
+# Окно отображения категорий
 categories_window = Window(
     Multi(
         Const("📂 Категории"),
