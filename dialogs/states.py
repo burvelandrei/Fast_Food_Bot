@@ -17,6 +17,7 @@ class ProductsSG(StatesGroup):
 
 class CartsSG(StatesGroup):
     carts = State()
+    cart_item = State()
 
 
 class OrdersSG(StatesGroup):
