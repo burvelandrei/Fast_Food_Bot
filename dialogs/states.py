@@ -13,3 +13,12 @@ class ProductsSG(StatesGroup):
     categories = State()
     products = State()
     product_detail = State()
+
+
+class CartsSG(StatesGroup):
+    carts = State()
+
+
+class OrdersSG(StatesGroup):
+    orders = State()
+    order_detail = State()
