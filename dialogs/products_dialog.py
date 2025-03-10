@@ -42,7 +42,6 @@ async def product_button(
     await dialog_manager.switch_to(state=ProductsSG.product_detail)
 
 
-# Хэндлер для добавления продукта в корзину
 async def add_to_cart_button(
     callback: CallbackQuery,
     widget: Button,
@@ -57,36 +56,53 @@ async def add_to_cart_button(
         "product_id": product_id,
         "quantity": 1,
     }
+
     async with APIClient(user.email) as api:
-        await api.post(
-            "/carts/add/",
-            data=data,
-        )
-    await callback.answer(f"{product_name} добавлен(а) в корзину")
+        response = await api.post("/carts/add/", data=data)
+
+    if response["success"]:
+        await callback.answer(f"{product_name} добавлен(а) в корзину ✅")
+    else:
+        error_message = "Произошла неизвестная ошибка."
+        await callback.answer(f"⚠️ Ошибка: {error_message}")
 
 
 # Геттер для получения всех категорий и передаче в окно
 async def categories_getter(dialog_manager: DialogManager, **kwargs):
     async with APIClient() as api:
-        categories = await api.get("/category/")
-        return {"categories": categories}
+        response = await api.get("/category/")
+    if response["success"]:
+        categories = response["data"]
+    else:
+        categories = None
+    error_message = "Категории временно недоступны." if not categories else None
+    return {"categories": categories, "error_message": error_message}
 
 
 # Геттер для получения всех продуктов этой категории и передаче в окно
 async def products_getter(dialog_manager: DialogManager, **kwargs):
     category_id = dialog_manager.dialog_data["category_id"]
     async with APIClient() as api:
-        products = await api.get(f"/products/?category_id={category_id}")
-        return {"products": products}
+        response = await api.get(f"/products/?category_id={category_id}")
+    if response["success"]:
+        products = response["data"]
+    else:
+        products = None
+    error_message = "Продукты временно недоступны." if not products else None
+    return {"products": products, "error_message": error_message}
 
 
 # Гетер для получения информации о продукте и передаче в окно
 async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
-    product_id = dialog_manager.dialog_data["product_id"]
+    product_id = dialog_manager.dialog_data.get("product_id")
+
     async with APIClient() as api:
-        product_detail = await api.get(f"/products/{product_id}/")
+        response = await api.get(f"/products/{product_id}/")
+
+    if response["success"]:
+        product_detail = response["data"]
         dialog_manager.dialog_data["product_name"] = product_detail["name"]
-        check_image = product_detail["photo_url"]
+        check_image = product_detail.get("photo_url")
         photo_s3_url = None
         if check_image:
             photo_s3_url = (
@@ -94,16 +110,28 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
             )
         return {
             "name": product_detail["name"],
-            "description": product_detail["description"],
+            "description": product_detail.get("description", "Описание не доступно."),
             "price": product_detail["final_price"],
             "photo_s3_url": photo_s3_url,
             "check_image": check_image,
         }
+    else:
+        return {
+            "name": "Продукт недоступен",
+            "description": "Информация о продукте временно недоступна.",
+            "price": "—",
+            "photo_s3_url": None,
+            "check_image": None,
+        }
 
 
-# Окно отображения категорий
+from aiogram_dialog.widgets.text import Multi
+
 categories_window = Window(
-    Const("📂 Категории"),
+    Multi(
+        Const("📂 Категории"),
+        Format("{error_message}", when="error_message"),
+    ),
     ScrollingGroup(
         Select(
             Format("📁 {item[name]}"),
@@ -115,7 +143,7 @@ categories_window = Window(
         id="categories_scroll_menu",
         width=1,
         height=5,
-        when=lambda data, *_: len(data["categories"]) > 5,
+        when=lambda data, *_: data["categories"] and len(data["categories"]) > 5,
     ),
     Group(
         Select(
@@ -127,7 +155,7 @@ categories_window = Window(
         ),
         id="categories_list_menu",
         width=1,
-        when=lambda data, *_: len(data["categories"]) <= 5,
+        when=lambda data, *_: data["categories"] and len(data["categories"]) <= 5,
     ),
     Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
     getter=categories_getter,
@@ -136,7 +164,10 @@ categories_window = Window(
 
 # Окно отображения продуктов
 products_window = Window(
-    Const("🍔 Продукты"),
+    Multi(
+        Const("🍔 Продукты"),
+        Format("{error_message}", when="error_message"),
+    ),
     ScrollingGroup(
         Select(
             Format("{item[name]}"),
@@ -148,7 +179,7 @@ products_window = Window(
         id="scroll_list_menu",
         width=1,
         height=5,
-        when=lambda data, *_: len(data["products"]) > 5,
+        when=lambda data, *_: data["products"] and len(data["products"]) > 5,
     ),
     Group(
         Select(
@@ -160,7 +191,7 @@ products_window = Window(
         ),
         id="products_list_menu",
         width=1,
-        when=lambda data, *_: len(data["products"]) <= 5,
+        when=lambda data, *_: data["products"] and len(data["products"]) <= 5,
     ),
     SwitchTo(
         text=Const("🔙 Назад"),
@@ -177,7 +208,7 @@ product_detail_window = Window(
     StaticMedia(url=Format("{photo_s3_url}"), when="check_image"),
     Format("🏷️ Наименование: {name}"),
     Format("📝 Описание: {description}", when="description"),
-    Format("💰 Цена: {price} ₽"),
+    Format("💰 Цена: {price} руб."),
     Button(
         text=Const("🛒 Добавить в корзину"),
         id="add_to_cart",
