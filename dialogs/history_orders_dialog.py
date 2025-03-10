@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format, Case, List
@@ -15,10 +15,11 @@ from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
 
-# Функция для форматирования даты в читаемы формат
+# Функция для форматирования даты и времени в читаемый формат (с переводом в МСК)
 def formatted_date(utc_date: str):
     dt = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S.%f")
-    formatted_date = dt.strftime("%d.%m.%Y")
+    dt_msk = dt + timedelta(hours=3)
+    formatted_date = dt_msk.strftime("%d.%m.%Y %H:%M")
     return formatted_date
 
 
