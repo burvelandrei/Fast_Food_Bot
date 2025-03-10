@@ -12,7 +12,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.media import StaticMedia
 from environs import Env
 from dialogs.states import ProductsSG
-from services.api_client import APIClient
+from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
 
@@ -56,22 +56,21 @@ async def add_to_cart_button(
         "product_id": product_id,
         "quantity": 1,
     }
-    async with APIClient(user.email) as api:
-        response = await api.post("/carts/add/", data=data)
-    if response["success"]:
-        await callback.answer(f"{product_name} добавлен(а) в корзину ✅")
-    else:
+    try:
+        async with APIClient(user.email) as api:
+            await api.post("/carts/add/", data=data)
+            await callback.answer(f"{product_name} добавлен(а) в корзину ✅")
+    except APIError:
         error_message = "Произошла неизвестная ошибка."
         await callback.answer(f"⚠️ Ошибка: {error_message}")
 
 
 # Геттер для получения всех категорий и передаче в окно
 async def categories_getter(dialog_manager: DialogManager, **kwargs):
-    async with APIClient() as api:
-        response = await api.get("/category/")
-    if response["success"]:
-        categories = response["data"]
-    else:
+    try:
+        async with APIClient() as api:
+            categories = await api.get("/category/")
+    except APIError:
         categories = None
     error_message = "Категории временно недоступны." if not categories else None
     return {"categories": categories, "error_message": error_message}
@@ -80,11 +79,10 @@ async def categories_getter(dialog_manager: DialogManager, **kwargs):
 # Геттер для получения всех продуктов этой категории и передаче в окно
 async def products_getter(dialog_manager: DialogManager, **kwargs):
     category_id = dialog_manager.dialog_data["category_id"]
-    async with APIClient() as api:
-        response = await api.get(f"/products/?category_id={category_id}")
-    if response["success"]:
-        products = response["data"]
-    else:
+    try:
+        async with APIClient() as api:
+            products = await api.get(f"/products/?category_id={category_id}")
+    except APIError:
         products = None
     error_message = "Продукты временно недоступны." if not products else None
     return {"products": products, "error_message": error_message}
@@ -93,19 +91,16 @@ async def products_getter(dialog_manager: DialogManager, **kwargs):
 # Гетер для получения информации о продукте и передаче в окно
 async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
     product_id = dialog_manager.dialog_data.get("product_id")
-
-    async with APIClient() as api:
-        response = await api.get(f"/products/{product_id}/")
-
-    if response["success"]:
-        product_detail = response["data"]
-        dialog_manager.dialog_data["product_name"] = product_detail["name"]
-        check_image = product_detail.get("photo_url")
-        photo_s3_url = None
-        if check_image:
-            photo_s3_url = (
-                f"{env('S3_HOST')}{env('S3_BACKET')}{product_detail['photo_url']}"
-            )
+    try:
+        async with APIClient() as api:
+            product_detail = await api.get(f"/products/{product_id}/")
+            dialog_manager.dialog_data["product_name"] = product_detail["name"]
+            check_image = product_detail.get("photo_url")
+            photo_s3_url = None
+            if check_image:
+                photo_s3_url = (
+                    f"{env('S3_HOST')}{env('S3_BACKET')}{product_detail['photo_url']}"
+                )
         return {
             "name": product_detail["name"],
             "description": product_detail.get("description", "Описание не доступно."),
@@ -113,7 +108,7 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
             "photo_s3_url": photo_s3_url,
             "check_image": check_image,
         }
-    else:
+    except APIError:
         return {
             "name": "Продукт недоступен",
             "description": "Информация о продукте временно недоступна.",

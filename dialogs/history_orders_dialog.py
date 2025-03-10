@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.kbd import (
     Group,
 )
 from dialogs.states import OrdersSG
-from services.api_client import APIClient
+from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
 
@@ -37,17 +37,16 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
     tg_id = str(dialog_manager.event.from_user.id)
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
-    async with APIClient(user.email) as api:
-        response = await api.get("/orders/")
-        if response["success"]:
-            orders = response["data"]
+    try:
+        async with APIClient(user.email) as api:
+            orders = await api.get("/orders/")
             for order in orders:
                 created_at = order.get("created_at")
                 order["created_at"] = formatted_date(created_at)
-        else:
-            orders = None
-        error_message = "История заказов временно недоступна." if not orders else None
-        return {"orders": orders, "error_message": error_message}
+    except APIError:
+        orders = None
+    error_message = "История заказов временно недоступна." if not orders else None
+    return {"orders": orders, "error_message": error_message}
 
 
 # Геттер для получения заказа по id и передачи в окно
@@ -56,23 +55,24 @@ async def order_detail_getter(dialog_manager: DialogManager, **kwargs):
     tg_id = str(dialog_manager.event.from_user.id)
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
-    async with APIClient(user.email) as api:
-        response = await api.get(f"/orders/{order_id}/")
-        if response["success"]:
-            order = response["data"]
+    try:
+        async with APIClient(user.email) as api:
+            order = await api.get(f"/orders/{order_id}/")
             return {
                 "id": order["id"],
                 "order_items": order["order_items"],
                 "created_at": formatted_date(order["created_at"]),
                 "total_amount": order["total_amount"],
+                "error_message": None,
             }
-        else:
-            return {
-                "id": "Информация о заказе временно недоступна",
-                "order_items": [],
-                "created_at": "-",
-                "total_amount": 0,
-            }
+    except APIError:
+        return {
+            "id": "-",
+            "order_items": [],
+            "created_at": "-",
+            "total_amount": 0,
+            "error_message": "Информация о заказе временно недоступна",
+        }
 
 
 # Окно отображения всех заказаов пользователя
@@ -121,6 +121,7 @@ history_orders_window = Window(
 
 # Окно отображения информации о заказе
 order_detail_window = Window(
+    Format("{error_message}", when="error_message"),
     Format("📦 Заказ №{id}"),
     Format("📅 Дата: {created_at}\n"),
     Format("📜 Состав заказа:"),
