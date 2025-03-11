@@ -14,7 +14,9 @@ env.read_env()
 
 
 # Функция для прочтения очереди rabbitmq на предмет подтверждённых почт
-async def listen_for_confirmations(bot: Bot, session:AsyncSession, dialog_bg_factory: BgManagerFactory):
+async def listen_for_confirmations(
+    bot: Bot, session: AsyncSession, dialog_bg_factory: BgManagerFactory
+):
     connection = await aio_pika.connect_robust(
         f"amqp://{env('RMQ_USER')}:{env('RMQ_PASSWORD')}@localhost/"
     )
@@ -30,7 +32,13 @@ async def listen_for_confirmations(bot: Bot, session:AsyncSession, dialog_bg_fac
                 email = event_data.get("email")
 
                 if tg_id:
-                    await UserDO.add(session=session, **{"tg_id": tg_id, "email": email})
-                    await bot.send_message(tg_id, f"✅ Ваша почта {email} успешно подтверждена!")
-                    bg_manager = dialog_bg_factory.bg(bot=bot, user_id=tg_id, chat_id=tg_id)
+                    await UserDO.add(
+                        session=session, **{"tg_id": tg_id, "email": email}
+                    )
+                    await bot.send_message(
+                        tg_id, f"✅ Ваша почта {email} успешно подтверждена!"
+                    )
+                    bg_manager = dialog_bg_factory.bg(
+                        bot=bot, user_id=tg_id, chat_id=tg_id
+                    )
                     await bg_manager.start(state=MenuSG.menu)

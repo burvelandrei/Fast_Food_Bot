@@ -52,7 +52,11 @@ async def main() -> None:
     dp.include_router(history_orders_dialog.dialog)
     dialog_bg_factory = setup_dialogs(dp)
 
-    asyncio.create_task(listen_for_confirmations(bot=bot, session=AsyncSessionLocal(), dialog_bg_factory=dialog_bg_factory))
+    asyncio.create_task(
+        listen_for_confirmations(
+            bot=bot, session=AsyncSessionLocal(), dialog_bg_factory=dialog_bg_factory
+        )
+    )
     # Пропускаем накопившиеся апдейты и запускаем polling
     await bot.delete_webhook(drop_pending_updates=True)
     try:
