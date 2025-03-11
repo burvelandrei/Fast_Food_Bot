@@ -1,14 +1,10 @@
 import logging
 import logging.config
 from typing import Optional, Dict, Any
-from environs import Env
 from aiohttp import client
 from services.auth import create_access_token
 from utils.logger import logging_config
-
-
-env = Env()
-env.read_env()
+from config import settings
 
 
 logging.config.dictConfig(logging_config)
@@ -25,7 +21,7 @@ class APIClient:
     """Класс для запросов к API."""
 
     def __init__(self, email: Optional[str] = None):
-        self.domain = f"http://{env('API_HOST')}:{env('API_PORT')}"
+        self.domain = f"http://{settings.API_HOST}:{settings.API_PORT}"
         self.headers = {"Content-Type": "application/json"}
         if email:
             self.access_token = create_access_token(email)

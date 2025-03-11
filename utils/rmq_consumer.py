@@ -5,12 +5,9 @@ from aiogram.types import Chat, User
 from aiogram.types import Message
 from aiogram_dialog import BgManagerFactory
 from sqlalchemy.ext.asyncio import AsyncSession
-from environs import Env
 from db.operations import UserDO
 from dialogs.states import MenuSG
-
-env = Env()
-env.read_env()
+from config import settings
 
 
 # Функция для прочтения очереди rabbitmq на предмет подтверждённых почт
@@ -18,7 +15,7 @@ async def listen_for_confirmations(
     bot: Bot, session: AsyncSession, dialog_bg_factory: BgManagerFactory
 ):
     connection = await aio_pika.connect_robust(
-        f"amqp://{env('RMQ_USER')}:{env('RMQ_PASSWORD')}@localhost/"
+        f"amqp://{settings.RMQ_USER}:{settings.RMQ_PASSWORD}@{settings.API_HOST}/"
     )
     channel = await connection.channel()
 

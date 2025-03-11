@@ -10,14 +10,10 @@ from aiogram_dialog.widgets.kbd import (
     Group,
 )
 from aiogram_dialog.widgets.media import StaticMedia
-from environs import Env
 from dialogs.states import ProductsSG
 from services.api_client import APIClient, APIError
 from db.operations import UserDO
-
-
-env = Env()
-env.read_env()
+from config import settings
 
 
 # Хэндлер обработки выбранной категории
@@ -99,7 +95,7 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
             photo_s3_url = None
             if check_image:
                 photo_s3_url = (
-                    f"{env('S3_HOST')}{env('S3_BACKET')}{product_detail['photo_url']}"
+                    f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_url']}"
                 )
         return {
             "name": product_detail["name"],

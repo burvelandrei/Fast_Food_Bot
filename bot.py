@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import logging.config
-from environs import Env
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram_dialog import setup_dialogs
@@ -18,10 +17,7 @@ from dialogs import (
 from db.connect import AsyncSessionLocal
 from utils.middlewares import DBSessionMiddleware
 from utils.rmq_consumer import listen_for_confirmations
-
-
-env = Env()
-env.read_env()
+from config import settings
 
 
 logger = logging.getLogger(__name__)
@@ -34,10 +30,10 @@ async def main() -> None:
 
     # Инициализируем бот, редис и диспетчер
     bot: Bot = Bot(
-        token=env("BOT_TOKEN"), default=DefaultBotProperties(parse_mode="HTML")
+        token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML")
     )
     storage = RedisStorage.from_url(
-        f'redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/0',
+        f'redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0',
         key_builder=DefaultKeyBuilder(with_destiny=True),
     )
     dp: Dispatcher = Dispatcher(storage=storage)
