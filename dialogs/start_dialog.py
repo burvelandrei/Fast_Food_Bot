@@ -37,7 +37,7 @@ async def correct_email(
         async with APIClient() as api:
             await api.post("/users/register/", data=data)
             await message.answer("Перейди в свою почту и подтверди её")
-            await dialog_manager.start(state=MenuSG.menu)
+            await dialog_manager.done()
 
 
 # Хэндлер для обработки невалидного email
