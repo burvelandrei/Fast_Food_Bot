@@ -17,6 +17,7 @@ from dialogs import (
 )
 from db.connect import AsyncSessionLocal
 from utils.middlewares import DBSessionMiddleware
+from utils.rmq_consumer import listen_for_confirmations
 
 
 env = Env()
@@ -51,6 +52,7 @@ async def main() -> None:
     dp.include_router(history_orders_dialog.dialog)
     setup_dialogs(dp)
 
+    asyncio.create_task(listen_for_confirmations(bot=bot, session=AsyncSessionLocal()))
     # Пропускаем накопившиеся апдейты и запускаем polling
     await bot.delete_webhook(drop_pending_updates=True)
     try:

@@ -1,3 +1,4 @@
+import asyncio
 from aiogram.types import Message
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const
@@ -6,6 +7,7 @@ from email_validator import validate_email, EmailNotValidError
 from dialogs.states import StartSG, MenuSG
 from services.api_client import APIClient
 from db.operations import UserDO
+from utils.rmq_consumer import listen_for_confirmations
 
 
 # Функция проверки валидности email
@@ -27,14 +29,14 @@ async def correct_email(
         "email": text,
         "tg_id": tg_id,
     }
-    db_user = UserDO.get_by_email(email=text, session=session)
+    db_user = await UserDO.get_by_email(email=text, session=session)
     if db_user:
         await message.answer("Пользователь с такой почтой уже присутствует!")
         await dialog_manager.switch_to(state=StartSG.start)
     else:
         async with APIClient() as api:
-            result = await api.post("/users/register/", data=data)
-            await UserDO.add(session=session, **{"tg_id": tg_id, "email": text})
+            await api.post("/users/register/", data=data)
+            await message.answer("Перейди в свою почту и подтверди её")
             await dialog_manager.start(state=MenuSG.menu)
 
 
