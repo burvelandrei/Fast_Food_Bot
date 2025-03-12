@@ -1,13 +1,11 @@
-import asyncio
 from aiogram.types import Message
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
 from email_validator import validate_email, EmailNotValidError
-from dialogs.states import StartSG, MenuSG
-from services.api_client import APIClient
+from dialogs.states import StartSG
+from services.api_client import APIClient, APIError
 from db.operations import UserDO
-from utils.rmq_consumer import listen_for_confirmations
 
 
 # Функция проверки валидности email
@@ -34,10 +32,14 @@ async def correct_email(
         await message.answer("Пользователь с такой почтой уже присутствует!")
         await dialog_manager.switch_to(state=StartSG.start)
     else:
-        async with APIClient() as api:
-            await api.post("/users/register/", data=data)
-            await message.answer("Перейди в свою почту и подтверди её")
-            await dialog_manager.done()
+        try:
+            async with APIClient() as api:
+                await api.post("/users/register/", data=data)
+                await message.answer("Перейди в свою почту и подтверди её")
+                await dialog_manager.done()
+        except APIError:
+            await message.answer("Произошла неизвестная ошибка. Давай попробуем ещё раз.")
+            await dialog_manager.switch_to(state=StartSG.start)
 
 
 # Хэндлер для обработки невалидного email
