@@ -110,10 +110,10 @@ async def update_quantity(
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     quantity = dialog_manager.dialog_data.get("quantity")
-    data = {"product_id": product_id, "quantity": quantity}
+    data = {"quantity": quantity}
     try:
         async with APIClient(user.email) as api:
-            await api.post("/carts/update/", data=data)
+            await api.patch(f"/carts/update/{product_id}/", data=data)
             cart_item = await api.get(f"/carts/{product_id}/")
             dialog_manager.dialog_data["cart_item_data"] = cart_item
             await callback.answer("Количество продукта обновлено")

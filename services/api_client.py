@@ -62,6 +62,20 @@ class APIClient:
             logger.error(f"Network error - {e}")
             raise APIError(f"Network error: {e}")
 
+    async def patch(self, endpoint: str, data: Optional[Dict[str, Any]] = None):
+        url = self.domain + endpoint
+        try:
+            async with self.session.patch(url, json=data) as response:
+                if response.status in {200, 204}:
+                    logger.info(f"PATCH request successful: {response.status}")
+                    return await response.json() if response.status == 200 else None
+                else:
+                    logger.error(f"PATCH request failed - Status: {response.status}")
+                    raise APIError(f"API request failed with status {response.status}")
+        except client.ClientError as e:
+            logger.error(f"Network error - {e}")
+            raise APIError(f"Network error: {e}")
+
     async def delete(self, endpoint: str):
         url = self.domain + endpoint
         try:
