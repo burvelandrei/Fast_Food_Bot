@@ -23,8 +23,8 @@ def formatted_date(utc_date: str):
     return formatted_date
 
 
-# Хэндлер обработки нажотой кнопки заказа
-async def order_button(
+# Хэндлер обработки нажотой кнопки выполненного заказа
+async def history_order_button(
     callback: CallbackQuery,
     widget: Select,
     dialog_manager: DialogManager,
@@ -51,7 +51,7 @@ async def repeat_order(
         await callback.answer("Ошибка при добавлении товаров в корзину.")
 
 
-# Геттер для получения списка заказов и передачи в окно
+# Геттер для получения списка истории заказов и передачи в окно
 async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
     tg_id = str(dialog_manager.event.from_user.id)
     session = dialog_manager.middleware_data["session"]
@@ -68,8 +68,8 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
     return {"orders": orders, "error_message": error_message}
 
 
-# Геттер для получения заказа по id и передачи в окно
-async def order_detail_getter(dialog_manager: DialogManager, **kwargs):
+# Геттер для получения выполненного заказа по id и передачи в окно
+async def history_order_detail_getter(dialog_manager: DialogManager, **kwargs):
     order_id = dialog_manager.dialog_data["order_id"]
     tg_id = str(dialog_manager.event.from_user.id)
     session = dialog_manager.middleware_data["session"]
@@ -94,7 +94,7 @@ async def order_detail_getter(dialog_manager: DialogManager, **kwargs):
         }
 
 
-# Окно отображения всех заказаов пользователя
+# Окно отображения истории заказаов пользователя
 history_orders_window = Window(
     # если заказов выводим то что нет заказов
     Case(
@@ -113,7 +113,7 @@ history_orders_window = Window(
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
-            on_click=order_button,
+            on_click=history_order_button,
         ),
         id="orders_scroll",
         width=1,
@@ -127,19 +127,19 @@ history_orders_window = Window(
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
-            on_click=order_button,
+            on_click=history_order_button,
         ),
         width=1,
         when=lambda data, *_: data["orders"] and len(data["orders"]) <= 5,
     ),
-    Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
+    Cancel(text=Const("🔙 Назад в Профиль!"), id="__main__"),
     getter=history_orders_getter,
     state=OrdersSG.orders,
 )
 
 
-# Окно отображения информации о заказе
-order_detail_window = Window(
+# Окно отображения информации о выполненном заказе
+history_order_detail_window = Window(
     Format("{error_message}", when="error_message"),
     Format("📦 Заказ №{id}"),
     Format("📅 Дата: {created_at}\n"),
@@ -159,10 +159,10 @@ order_detail_window = Window(
         id="back_to_history_orders",
         state=OrdersSG.orders,
     ),
-    Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
-    getter=order_detail_getter,
+    Cancel(text=Const("🔙 Назад в Профиль!"), id="__main__"),
+    getter=history_order_detail_getter,
     state=OrdersSG.order_detail,
 )
 
 
-dialog = Dialog(history_orders_window, order_detail_window)
+dialog = Dialog(history_orders_window, history_order_detail_window)

@@ -13,6 +13,7 @@ from dialogs import (
     menu_dialog,
     products_dialog,
     carts_dialog,
+    profile_dialog
 )
 from db.connect import AsyncSessionLocal
 from utils.middlewares import DBSessionMiddleware
@@ -43,6 +44,7 @@ async def main() -> None:
     dp.include_router(start_handler.router)
     dp.include_router(start_dialog.dialog)
     dp.include_router(menu_dialog.dialog)
+    dp.include_router(profile_dialog.dialog)
     dp.include_router(products_dialog.dialog)
     dp.include_router(carts_dialog.dialog)
     dp.include_router(history_orders_dialog.dialog)

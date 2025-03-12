@@ -20,6 +20,10 @@ class CartsSG(StatesGroup):
     cart_item = State()
 
 
+class ProfileSG(StatesGroup):
+    profile = State()
+
+
 class OrdersSG(StatesGroup):
     orders = State()
     order_detail = State()

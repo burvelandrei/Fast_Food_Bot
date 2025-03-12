@@ -1,7 +1,7 @@
 from aiogram_dialog import Dialog, Window
 from aiogram_dialog.widgets.text import Const
 from aiogram_dialog.widgets.kbd import Start
-from dialogs.states import MenuSG, ProductsSG, OrdersSG, CartsSG
+from dialogs.states import MenuSG, ProductsSG, CartsSG, ProfileSG
 
 
 menu_window = Window(
@@ -17,9 +17,9 @@ menu_window = Window(
         state=CartsSG.carts,
     ),
     Start(
-        Const("📜 История заказов"),
-        id="history_orders",
-        state=OrdersSG.orders,
+        Const("👤 Профиль"),
+        id="profile",
+        state=ProfileSG.profile,
     ),
     state=MenuSG.menu,
 )
