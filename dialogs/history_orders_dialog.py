@@ -64,7 +64,7 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
                 order["created_at"] = formatted_date(created_at)
     except APIError:
         orders = None
-    error_message = "История заказов временно недоступна." if not orders else None
+    error_message = "История заказов временно недоступна." if orders is None else None
     return {"orders": orders, "error_message": error_message}
 
 
