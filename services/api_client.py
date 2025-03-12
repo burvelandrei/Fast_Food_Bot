@@ -80,9 +80,9 @@ class APIClient:
         url = self.domain + endpoint
         try:
             async with self.session.delete(url) as response:
-                if response.status == 200:
+                if response.status in {200, 204}:
                     logger.info(f"DELETE request successful: {response.status}")
-                    return await response.json()
+                    return await response.json() if response.status == 200 else None
                 else:
                     logger.error(f"DELETE request failed - Status: {response.status}")
                     raise APIError(f"API request failed with status {response.status}")
