@@ -99,7 +99,7 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
                 )
         return {
             "name": product_detail["name"],
-            "description": product_detail.get("description", "Описание не доступно."),
+            "description": product_detail["description"],
             "price": product_detail["final_price"],
             "photo_s3_url": photo_s3_url,
             "check_image": check_image,
