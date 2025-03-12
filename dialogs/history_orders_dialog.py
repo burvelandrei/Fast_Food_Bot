@@ -15,11 +15,10 @@ from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
 
-# Функция для форматирования даты и времени в читаемый формат (с переводом в МСК)
-def formatted_date(utc_date: str):
-    dt = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S")
-    dt_msk = dt + timedelta(hours=3)
-    formatted_date = dt_msk.strftime("%d.%m.%Y %H:%M")
+# Функция для форматирования даты и времени в читаемый формат
+def formatted_date(date: str):
+    dt = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+    formatted_date = dt.strftime("%d.%m.%Y %H:%M")
     return formatted_date
 
 
@@ -60,8 +59,8 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
         async with APIClient(user.email) as api:
             orders = await api.get("/orders/?status=completed")
             for order in orders:
-                created_at = order.get("created_at")
-                order["created_at"] = formatted_date(created_at)
+                created_at_moscow = order.get("created_at_moscow")
+                order["created_at_moscow"] = formatted_date(created_at_moscow)
     except APIError:
         orders = None
     error_message = "История заказов временно недоступна." if orders is None else None
@@ -80,7 +79,7 @@ async def history_order_detail_getter(dialog_manager: DialogManager, **kwargs):
             return {
                 "id": order["id"],
                 "order_items": order["order_items"],
-                "created_at": formatted_date(order["created_at"]),
+                "created_at_moscow": formatted_date(order["created_at_moscow"]),
                 "total_amount": order["total_amount"],
                 "error_message": None,
             }
@@ -88,7 +87,7 @@ async def history_order_detail_getter(dialog_manager: DialogManager, **kwargs):
         return {
             "id": "-",
             "order_items": [],
-            "created_at": "-",
+            "created_at_moscow": "-",
             "total_amount": 0,
             "error_message": "Информация о заказе временно недоступна",
         }
@@ -109,7 +108,7 @@ history_orders_window = Window(
     # если заказов больше 5 выводим меню с пагинацией
     ScrollingGroup(
         Select(
-            Format("📦 Заказ №{item[id]} от {item[created_at]}"),
+            Format("📦 Заказ №{item[id]} от {item[created_at_moscow]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -123,7 +122,7 @@ history_orders_window = Window(
     # если заказов меньше либо равно 5 выводим обычный список кнопок
     Group(
         Select(
-            Format("📦 Заказ №{item[id]} от {item[created_at]}"),
+            Format("📦 Заказ №{item[id]} от {item[created_at_moscow]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -142,7 +141,7 @@ history_orders_window = Window(
 history_order_detail_window = Window(
     Format("{error_message}", when="error_message"),
     Format("📦 Заказ №{id}"),
-    Format("📅 Дата: {created_at}\n"),
+    Format("📅 Дата: {created_at_moscow}\n"),
     Format("📜 Состав заказа:"),
     List(
         Format("- {item[name]} x {item[quantity]} шт. |  {item[total_price]} руб."),
