@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
-    
+
     SECRET_KEY_BOT: str
     ALGORITHM: str = "HS256"
 
@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
+    RMQ_HOST: str
+    RMQ_PORT: str
     RMQ_USER: str
     RMQ_PASSWORD: str
 

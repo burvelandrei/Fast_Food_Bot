@@ -15,7 +15,7 @@ async def listen_for_confirmations(
     bot: Bot, session: AsyncSession, dialog_bg_factory: BgManagerFactory
 ):
     connection = await aio_pika.connect_robust(
-        f"amqp://{settings.RMQ_USER}:{settings.RMQ_PASSWORD}@{settings.API_HOST}/"
+        f"amqp://{settings.RMQ_USER}:{settings.RMQ_PASSWORD}@{settings.RMQ_HOST}:{settings.RMQ_PORT}/"
     )
     channel = await connection.channel()
 
