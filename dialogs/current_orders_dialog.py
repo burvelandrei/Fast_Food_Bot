@@ -17,7 +17,7 @@ from db.operations import UserDO
 
 # Функция для форматирования даты и времени в читаемый формат (с переводом в МСК)
 def formatted_date(utc_date: str):
-    dt = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S.%f")
+    dt = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S")
     dt_msk = dt + timedelta(hours=3)
     formatted_date = dt_msk.strftime("%d.%m.%Y %H:%M")
     return formatted_date
