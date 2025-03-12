@@ -24,6 +24,11 @@ class ProfileSG(StatesGroup):
     profile = State()
 
 
-class OrdersSG(StatesGroup):
+class HistoryOrdersSG(StatesGroup):
+    orders = State()
+    order_detail = State()
+
+
+class CurrentOrdersSG(StatesGroup):
     orders = State()
     order_detail = State()

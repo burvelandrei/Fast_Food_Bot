@@ -9,6 +9,7 @@ from utils.logger import logging_config
 from handlers import start_handler
 from dialogs import (
     history_orders_dialog,
+    current_orders_dialog,
     start_dialog,
     menu_dialog,
     products_dialog,
@@ -47,6 +48,7 @@ async def main() -> None:
     dp.include_router(profile_dialog.dialog)
     dp.include_router(products_dialog.dialog)
     dp.include_router(carts_dialog.dialog)
+    dp.include_router(current_orders_dialog.dialog)
     dp.include_router(history_orders_dialog.dialog)
     dialog_bg_factory = setup_dialogs(dp)
 

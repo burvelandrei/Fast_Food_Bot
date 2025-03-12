@@ -1,7 +1,7 @@
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram_dialog.widgets.kbd import Start, Cancel
-from dialogs.states import OrdersSG, ProfileSG
+from dialogs.states import HistoryOrdersSG, ProfileSG, CurrentOrdersSG
 from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
@@ -35,9 +35,14 @@ profile_window = Window(
     Format("\nEmail: {email}"),
     Format("Telegram_ID: {tg_id}"),
     Start(
+        Const("⏳ Текущие заказы"),
+        id="current_orders",
+        state=CurrentOrdersSG.orders,
+    ),
+    Start(
         Const("📜 История заказов"),
         id="history_orders",
-        state=OrdersSG.orders,
+        state=HistoryOrdersSG.orders,
     ),
     Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
     getter=profile_getter,
