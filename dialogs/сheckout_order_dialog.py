@@ -1,5 +1,5 @@
 from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import DialogManager, Dialog, Window
+from aiogram_dialog import DialogManager, Dialog, Window, StartMode
 from aiogram_dialog.widgets.text import Const, Format, List, Case
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
 from aiogram_dialog.widgets.kbd import (
@@ -99,6 +99,7 @@ select_delivery_type = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
+        mode=StartMode.RESET_STACK
     ),
     state=CheckoutOrderSG.select_delivery_type,
 )
@@ -120,6 +121,7 @@ input_delivery_type = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
+        mode=StartMode.RESET_STACK
     ),
     state=CheckoutOrderSG.input_delivery_address,
 )
@@ -162,6 +164,7 @@ confirmation_order_window = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
+        mode=StartMode.RESET_STACK
     ),
     getter=confirmation_order_getter,
     state=CheckoutOrderSG.confirmation,
@@ -175,6 +178,7 @@ success_checkout = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
+        mode=StartMode.RESET_STACK
     ),
     state=CheckoutOrderSG.success_checkout,
 )
