@@ -243,7 +243,7 @@ carts_window = Window(
     ),
     Cancel(
         text=Const("🔙 Назад в Меню!"),
-        id="__main__",
+        id="__menu__",
     ),
     getter=carts_getter,
     state=CartsSG.carts,
@@ -284,7 +284,10 @@ cart_item_window = Window(
         id="back_to_cart",
         on_click=back_to_cart,
     ),
-    Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Меню!"),
+        id="__menu__",
+    ),
     getter=cart_item_getter,
     state=CartsSG.cart_item,
 )

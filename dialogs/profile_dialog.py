@@ -44,7 +44,10 @@ profile_window = Window(
         id="history_orders",
         state=HistoryOrdersSG.orders,
     ),
-    Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Меню!"),
+        id="__menu__",
+    ),
     getter=profile_getter,
     state=ProfileSG.profile,
 )

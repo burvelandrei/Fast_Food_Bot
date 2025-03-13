@@ -21,6 +21,7 @@ def formatted_date(date: str):
     formatted_date = dt.strftime("%d.%m.%Y %H:%M")
     return formatted_date
 
+
 # Хэндлер обработки нажотой кнопки выполненного заказа
 async def current_order_button(
     callback: CallbackQuery,
@@ -117,7 +118,10 @@ current_orders_window = Window(
         width=1,
         when=lambda data, *_: data["orders"] and len(data["orders"]) <= 5,
     ),
-    Cancel(text=Const("🔙 Назад в Профиль!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Профиль!"),
+        id="__menu__",
+    ),
     getter=current_orders_getter,
     state=CurrentOrdersSG.orders,
 )
@@ -150,7 +154,10 @@ current_order_detail_window = Window(
         id="back_to_history_orders",
         state=CurrentOrdersSG.orders,
     ),
-    Cancel(text=Const("🔙 Назад в Профиль!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Профиль!"),
+        id="__menu__",
+    ),
     getter=current_order_detail_getter,
     state=CurrentOrdersSG.order_detail,
 )

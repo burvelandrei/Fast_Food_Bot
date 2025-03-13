@@ -135,7 +135,10 @@ history_orders_window = Window(
         width=1,
         when=lambda data, *_: data["orders"] and len(data["orders"]) <= 5,
     ),
-    Cancel(text=Const("🔙 Назад в Профиль!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Профиль!"),
+        id="__profile__",
+    ),
     getter=history_orders_getter,
     state=HistoryOrdersSG.orders,
 )
@@ -173,7 +176,10 @@ history_order_detail_window = Window(
         id="back_to_history_orders",
         state=HistoryOrdersSG.orders,
     ),
-    Cancel(text=Const("🔙 Назад в Профиль!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Профиль!"),
+        id="__profile__",
+    ),
     getter=history_order_detail_getter,
     state=HistoryOrdersSG.order_detail,
 )

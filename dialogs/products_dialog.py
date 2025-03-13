@@ -90,9 +90,7 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
             check_image = product_detail.get("photo_url")
             photo_s3_url = None
             if check_image:
-                photo_s3_url = (
-                    f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_url']}"
-                )
+                photo_s3_url = f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_url']}"
         return {
             "name": product_detail["name"],
             "description": product_detail["description"],
@@ -141,7 +139,10 @@ categories_window = Window(
         width=1,
         when=lambda data, *_: data["categories"] and len(data["categories"]) <= 5,
     ),
-    Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Меню!"),
+        id="__menu__",
+    ),
     getter=categories_getter,
     state=ProductsSG.categories,
 )
@@ -182,7 +183,10 @@ products_window = Window(
         id="back_to_category",
         state=ProductsSG.categories,
     ),
-    Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Меню!"),
+        id="__menu__",
+    ),
     getter=products_getter,
     state=ProductsSG.products,
 )
@@ -203,7 +207,10 @@ product_detail_window = Window(
         id="back_to_products",
         state=ProductsSG.products,
     ),
-    Cancel(text=Const("🔙 Назад в Меню!"), id="__main__"),
+    Cancel(
+        text=Const("🔙 Назад в Меню!"),
+        id="__menu__",
+    ),
     getter=product_detail_getter,
     state=ProductsSG.product_detail,
 )
