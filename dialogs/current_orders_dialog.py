@@ -59,7 +59,7 @@ async def current_order_detail_getter(dialog_manager: DialogManager, **kwargs):
         async with APIClient(user.email) as api:
             order = await api.get(f"/orders/{order_id}/")
             return {
-                "id": order["id"],
+                "user_order_id": order["user_order_id"],
                 "order_items": order["order_items"],
                 "created_at_moscow": formatted_date(order["created_at_moscow"]),
                 "total_amount": order["total_amount"],
@@ -69,7 +69,7 @@ async def current_order_detail_getter(dialog_manager: DialogManager, **kwargs):
             }
     except APIError:
         return {
-            "id": "-",
+            "user_order_id": "-",
             "order_items": [],
             "created_at_moscow": "-",
             "total_amount": 0,
@@ -94,7 +94,7 @@ current_orders_window = Window(
     # если заказов больше 5 выводим меню с пагинацией
     ScrollingGroup(
         Select(
-            Format("📦 Заказ №{item[id]} от {item[created_at_moscow]}"),
+            Format("📦 Заказ №{item[user_order_id]} от {item[created_at_moscow]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -108,7 +108,7 @@ current_orders_window = Window(
     # если заказов меньше либо равно 5 выводим обычный список кнопок
     Group(
         Select(
-            Format("📦 Заказ №{item[id]} от {item[created_at_moscow]}"),
+            Format("📦 Заказ №{item[user_order_id]} от {item[created_at_moscow]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -126,7 +126,7 @@ current_orders_window = Window(
 # Окно отображения информации о выполненном заказе
 current_order_detail_window = Window(
     Format("{error_message}", when="error_message"),
-    Format("📦 Заказ №{id}"),
+    Format("📦 Заказ №{user_order_id}"),
     Format("📅 Дата: {created_at_moscow}\n"),
     Format("📜 Состав заказа:"),
     List(
