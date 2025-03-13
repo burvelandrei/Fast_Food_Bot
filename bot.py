@@ -14,7 +14,8 @@ from dialogs import (
     menu_dialog,
     products_dialog,
     carts_dialog,
-    profile_dialog
+    profile_dialog,
+    сheckout_order_dialog,
 )
 from db.connect import AsyncSessionLocal
 from utils.middlewares import DBSessionMiddleware
@@ -50,6 +51,7 @@ async def main() -> None:
     dp.include_router(carts_dialog.dialog)
     dp.include_router(current_orders_dialog.dialog)
     dp.include_router(history_orders_dialog.dialog)
+    dp.include_router(сheckout_order_dialog.dialog)
     dialog_bg_factory = setup_dialogs(dp)
 
     asyncio.create_task(

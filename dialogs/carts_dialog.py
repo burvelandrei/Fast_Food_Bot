@@ -7,9 +7,10 @@ from aiogram_dialog.widgets.kbd import (
     Cancel,
     ScrollingGroup,
     Group,
+    Start,
 )
 from aiogram_dialog.widgets.media import StaticMedia
-from dialogs.states import CartsSG
+from dialogs.states import CartsSG, CheckoutOrderSG
 from services.api_client import APIClient, APIError
 from db.operations import UserDO
 from config import settings
@@ -30,22 +31,6 @@ async def clear_cart(
             await callback.answer("Корзина очищена 🧹")
     except APIError:
         error_message = "Произошла ошибка при очистке корзины."
-        await callback.answer(f"⚠️ Ошибка: {error_message}")
-
-
-# Хэндлер кнопки оформления заказа
-async def confirmation_order(
-    callback: CallbackQuery, widget: Button, dialog_manager: DialogManager
-):
-    tg_id = str(dialog_manager.event.from_user.id)
-    session = dialog_manager.middleware_data["session"]
-    user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
-    try:
-        async with APIClient(user.email) as api:
-            await api.post("/orders/confirmation/")
-            await callback.answer("Заказ успешно оформлен 🎉")
-    except APIError:
-        error_message = "Не удалось оформить заказ."
         await callback.answer(f"⚠️ Ошибка: {error_message}")
 
 
@@ -243,17 +228,17 @@ carts_window = Window(
         width=1,
         when=lambda data, *_: data["cart_items"] and len(data["cart_items"]) <= 5,
     ),
-    # кнопки Очистить корзину и Оформить заказ выводятся только если есть элементы в корзине
+    # кнопки Очистить корзину и Перейти к оформлению заказа выводятся только если есть элементы в корзине
     Button(
         Const("🗑️ Очистить корзину"),
         id="clear_cart",
         on_click=clear_cart,
         when="cart_items",
     ),
-    Button(
-        Const("🚀 Оформить заказ"),
+    Start(
+        Const("🚀 Перейти к оформлению заказа"),
         id="checkout",
-        on_click=confirmation_order,
+        state=CheckoutOrderSG.select_delivery_type,
         when="cart_items",
     ),
     Cancel(
@@ -265,6 +250,7 @@ carts_window = Window(
 )
 
 
+# Окно отображения продукта в корзине
 cart_item_window = Window(
     StaticMedia(url=Format("{photo_s3_url}"), when="check_image"),
     Format("🏷️ Наименование: {name}"),
