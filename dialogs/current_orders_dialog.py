@@ -15,7 +15,7 @@ from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
 
-# Функция для форматирования даты и времени в читаемый формат 
+# Функция для форматирования даты и времени в читаемый формат
 def formatted_date(date: str):
     dt = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
     formatted_date = dt.strftime("%d.%m.%Y %H:%M")
@@ -63,6 +63,8 @@ async def current_order_detail_getter(dialog_manager: DialogManager, **kwargs):
                 "order_items": order["order_items"],
                 "created_at_moscow": formatted_date(order["created_at_moscow"]),
                 "total_amount": order["total_amount"],
+                "delivery_type": order["delivery"]["delivery_type"],
+                "delivery_address": order["delivery"]["delivery_address"],
                 "error_message": None,
             }
     except APIError:
@@ -71,6 +73,8 @@ async def current_order_detail_getter(dialog_manager: DialogManager, **kwargs):
             "order_items": [],
             "created_at_moscow": "-",
             "total_amount": 0,
+            "delivery_type": "-",
+            "delivery_address": "-",
             "error_message": "Информация о заказе временно недоступна",
         }
 
@@ -129,7 +133,18 @@ current_order_detail_window = Window(
         Format("- {item[name]} x {item[quantity]} шт. |  {item[total_price]} руб."),
         items="order_items",
     ),
-    Format("\n💰  Итоговая сумма: {total_amount} руб."),
+    Format("\n💰  Итоговая сумма: {total_amount} руб.\n"),
+    Case(
+        {
+            "pickup": Const("Способ доставки: 🚶 Самовывоз"),
+            "courier": Const("Способ доставки: 🚚 Доставка курьером"),
+        },
+        selector=lambda data, *_: data["delivery_type"],
+    ),
+    Format(
+        "Адрес для доставки: {delivery_address}",
+        when="delivery_address",
+    ),
     SwitchTo(
         text=Const("🔙 Назад"),
         id="back_to_history_orders",
