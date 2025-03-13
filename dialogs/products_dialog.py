@@ -48,13 +48,9 @@ async def add_to_cart_button(
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     product_id = dialog_manager.dialog_data["product_id"]
     product_name = dialog_manager.dialog_data["product_name"]
-    data = {
-        "product_id": product_id,
-        "quantity": 1,
-    }
     try:
         async with APIClient(user.email) as api:
-            await api.post("/carts/add/", data=data)
+            await api.post(f"/carts/add/{product_id}/")
             await callback.answer(f"{product_name} добавлен(а) в корзину ✅")
     except APIError:
         error_message = "Произошла неизвестная ошибка."
