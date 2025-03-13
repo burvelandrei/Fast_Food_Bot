@@ -6,7 +6,8 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram_dialog import setup_dialogs
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from utils.logger import logging_config
-from handlers import start_handler
+from utils.set_main_menu_bot import set_main_menu
+from handlers import user_handler
 from dialogs import (
     history_orders_dialog,
     current_orders_dialog,
@@ -40,10 +41,16 @@ async def main() -> None:
         key_builder=DefaultKeyBuilder(with_destiny=True),
     )
     dp: Dispatcher = Dispatcher(storage=storage)
+
+    # Настраиваем кнопку Menu бота
+    await set_main_menu(bot)
+
+    # Добавляем миддлварь логгирования
     dp.update.middleware(DBSessionMiddleware(AsyncSessionLocal))
 
+
     # Регистриуем роутеры в диспетчере
-    dp.include_router(start_handler.router)
+    dp.include_router(user_handler.router)
     dp.include_router(start_dialog.dialog)
     dp.include_router(menu_dialog.dialog)
     dp.include_router(profile_dialog.dialog)

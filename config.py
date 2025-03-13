@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     BOT_TOKEN: str
 
@@ -25,9 +26,15 @@ class Settings(BaseSettings):
     RMQ_PORT: str
     RMQ_USER: str
     RMQ_PASSWORD: str
+    MAIN_MENU_BOT: dict = {
+        "/start": "Старт бота и регистрация",
+        "/menu": "Главное меню",
+        "/help": "Техническая поддержка",
+    }
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+
 
 settings = Settings()
