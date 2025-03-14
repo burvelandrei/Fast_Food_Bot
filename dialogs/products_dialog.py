@@ -21,9 +21,17 @@ async def category_button(
     callback: CallbackQuery,
     widget: Select,
     dialog_manager: DialogManager,
-    item_id: int,
+    item_id: str,
 ):
-    dialog_manager.dialog_data["category_id"] = item_id
+    categories = dialog_manager.dialog_data["categories"]
+    category_name = "Продукты"
+    for category in categories:
+        if category["id"] == int(item_id):
+            category_name = category["name"]
+            break
+    dialog_manager.dialog_data.update(
+        {"category_id": item_id, "category_name": category_name}
+    )
     await dialog_manager.switch_to(state=ProductsSG.products)
 
 
@@ -32,7 +40,7 @@ async def product_button(
     callback: CallbackQuery,
     widget: Select,
     dialog_manager: DialogManager,
-    item_id: int,
+    item_id: str,
 ):
     """Обработчик выбора продукта"""
     try:
@@ -78,7 +86,7 @@ async def size_button(
     callback: CallbackQuery,
     widget: Select,
     dialog_manager: DialogManager,
-    item_id: int,
+    item_id: str,
 ):
     sizes = dialog_manager.dialog_data.get("sizes", [])
     selected_size = None
@@ -131,7 +139,8 @@ async def categories_getter(dialog_manager: DialogManager, **kwargs):
         async with APIClient() as api:
             categories = await api.get("/category/")
     except APIError:
-        categories = None
+        categories = []
+    dialog_manager.dialog_data["categories"] = categories
     error_message = "Категории временно недоступны." if not categories else None
     return {"categories": categories, "error_message": error_message}
 
@@ -139,13 +148,18 @@ async def categories_getter(dialog_manager: DialogManager, **kwargs):
 # Геттер для получения всех продуктов этой категории и передаче в окно
 async def products_getter(dialog_manager: DialogManager, **kwargs):
     category_id = dialog_manager.dialog_data["category_id"]
+    category_name = dialog_manager.dialog_data["category_name"]
     try:
         async with APIClient() as api:
             products = await api.get(f"/products/?category_id={category_id}")
     except APIError:
         products = None
     error_message = "Продукты временно недоступны." if not products else None
-    return {"products": products, "error_message": error_message}
+    return {
+        "products": products,
+        "category_name": category_name,
+        "error_message": error_message,
+    }
 
 
 # Гетер для получения информации о продукте и передаче в окно
@@ -204,7 +218,7 @@ categories_window = Window(
 # Окно отображения продуктов
 products_window = Window(
     Multi(
-        Const("🍔 Продукты"),
+        Format("{category_name}"),
         Format("{error_message}", when="error_message"),
     ),
     ScrollingGroup(
