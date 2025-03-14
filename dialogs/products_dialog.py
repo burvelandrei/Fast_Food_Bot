@@ -34,10 +34,74 @@ async def product_button(
     dialog_manager: DialogManager,
     item_id: int,
 ):
-    dialog_manager.dialog_data["product_id"] = item_id
-    await dialog_manager.switch_to(state=ProductsSG.product_detail)
+    """Обработчик выбора продукта"""
+    try:
+        async with APIClient() as api:
+            product_detail = await api.get(f"/products/{item_id}/")
+
+        sizes = [
+            {
+                "id": size_data["size"]["id"],
+                "name": size_data["size"]["name"],
+                "final_price": size_data["final_price"],
+            }
+            for size_data in product_detail["product_sizes"]
+        ]
+        default_size = sizes[0] if sizes else None
+        photo_url = None
+        if product_detail.get("photo_url"):
+            photo_url = (
+                f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_url']}"
+            )
+        dialog_manager.dialog_data.update(
+            {
+                "product_id": item_id,
+                "product_name": product_detail["name"],
+                "description": product_detail.get("description"),
+                "photo_url": photo_url,
+                "sizes": sizes,
+                "selected_size_id": default_size["id"] if default_size else None,
+                "selected_price": default_size["final_price"] if default_size else "—",
+                "selected_size_name": (
+                    default_size["name"] if default_size else "Не выбран"
+                ),
+            }
+        )
+        await dialog_manager.switch_to(state=ProductsSG.product_detail)
+
+    except APIError:
+        await callback.answer("⚠️ Ошибка: Не удалось загрузить продукт.")
 
 
+# Хэндлер выбора размера
+async def size_button(
+    callback: CallbackQuery,
+    widget: Select,
+    dialog_manager: DialogManager,
+    item_id: int,
+):
+    sizes = dialog_manager.dialog_data.get("sizes", [])
+    selected_size = None
+    for size in sizes:
+        if size["id"] == int(item_id):
+            selected_size = size
+            break
+    if selected_size:
+        dialog_manager.dialog_data.update(
+            {
+                "selected_size_id": selected_size["id"],
+                "selected_price": selected_size["final_price"],
+                "selected_size_name": selected_size["name"],
+            }
+        )
+        await callback.answer(f"Выбран размер: {selected_size['name']}")
+        await dialog_manager.update({})
+
+    else:
+        await callback.answer("⚠️ Ошибка: Размер не найден.")
+
+
+# Хэндлер добавления продукта в корзину
 async def add_to_cart_button(
     callback: CallbackQuery,
     widget: Button,
@@ -48,10 +112,14 @@ async def add_to_cart_button(
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     product_id = dialog_manager.dialog_data["product_id"]
     product_name = dialog_manager.dialog_data["product_name"]
+    size_id = dialog_manager.dialog_data["selected_size_id"]
+    size_name = dialog_manager.dialog_data["selected_size_name"]
     try:
         async with APIClient(user.email) as api:
-            await api.post(f"/carts/add/{product_id}/")
-            await callback.answer(f"{product_name} добавлен(а) в корзину ✅")
+            await api.post(f"/carts/add/{product_id}/{size_id}/")
+            await callback.answer(
+                f"{product_name} {size_name} добавлен(а) в корзину ✅"
+            )
     except APIError:
         error_message = "Произошла неизвестная ошибка."
         await callback.answer(f"⚠️ Ошибка: {error_message}")
@@ -82,30 +150,16 @@ async def products_getter(dialog_manager: DialogManager, **kwargs):
 
 # Гетер для получения информации о продукте и передаче в окно
 async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
-    product_id = dialog_manager.dialog_data.get("product_id")
-    try:
-        async with APIClient() as api:
-            product_detail = await api.get(f"/products/{product_id}/")
-            dialog_manager.dialog_data["product_name"] = product_detail["name"]
-            check_image = product_detail.get("photo_url")
-            photo_s3_url = None
-            if check_image:
-                photo_s3_url = f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_url']}"
-        return {
-            "name": product_detail["name"],
-            "description": product_detail["description"],
-            "price": product_detail["final_price"],
-            "photo_s3_url": photo_s3_url,
-            "check_image": check_image,
-        }
-    except APIError:
-        return {
-            "name": "Продукт недоступен",
-            "description": "Информация о продукте временно недоступна.",
-            "price": "—",
-            "photo_s3_url": None,
-            "check_image": None,
-        }
+    return {
+        "name": dialog_manager.dialog_data.get("product_name"),
+        "description": dialog_manager.dialog_data.get("description"),
+        "photo_url": dialog_manager.dialog_data.get("photo_url"),
+        "sizes": dialog_manager.dialog_data.get("sizes", []),
+        "selected_size_name": dialog_manager.dialog_data.get(
+            "selected_size_name", "Не выбран"
+        ),
+        "selected_price": dialog_manager.dialog_data.get("selected_price", "—"),
+    }
 
 
 # Окно отображения категорий
@@ -118,7 +172,7 @@ categories_window = Window(
         Select(
             Format("📁 {item[name]}"),
             id="categories_button",
-            item_id_getter=lambda x: x["id"],
+            item_id_getter=lambda x: f"{x["id"]}_{x["name"]}",
             items="categories",
             on_click=category_button,
         ),
@@ -193,10 +247,18 @@ products_window = Window(
 
 # Окно отображения информации о продукте
 product_detail_window = Window(
-    StaticMedia(url=Format("{photo_s3_url}"), when="check_image"),
+    StaticMedia(url=Format("{photo_url}"), when="photo_url"),
     Format("🏷️ Наименование: {name}"),
     Format("📝 Описание: {description}", when="description"),
-    Format("💰 Цена: {price} руб."),
+    Format("📏 Размер: {selected_size_name}"),
+    Format("💰 Цена: {selected_price} руб."),
+    Select(
+        Format("{item[name]}"),
+        id="size_button",
+        item_id_getter=lambda x: x["id"],
+        items="sizes",
+        on_click=size_button,
+    ),
     Button(
         text=Const("🛒 Добавить в корзину"),
         id="add_to_cart",
