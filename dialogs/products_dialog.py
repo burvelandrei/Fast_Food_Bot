@@ -57,9 +57,9 @@ async def product_button(
         ]
         default_size = sizes[0] if sizes else None
         photo_url = None
-        if product_detail.get("photo_url"):
+        if product_detail['photo_path']:
             photo_url = (
-                f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_url']}"
+                f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_path']}"
             )
         dialog_manager.dialog_data.update(
             {

@@ -185,17 +185,17 @@ async def cart_item_getter(dialog_manager: DialogManager, **kwargs):
     cart_item_data = dialog_manager.dialog_data.get("cart_item_data")
     quantity = dialog_manager.dialog_data.get("quantity")
     total_price = dialog_manager.dialog_data.get("total_price")
-    check_image = cart_item_data["product"]["photo_url"]
-    photo_s3_url = None
-    if check_image:
-        photo_s3_url = f"{settings.S3_HOST}{settings.S3_BACKET}{cart_item_data['product']['photo_url']}"
+    photo_url = None
+    if cart_item_data["product"]['photo_path']:
+        photo_url = (
+            f"{settings.S3_HOST}{settings.S3_BACKET}{cart_item_data["product"]['photo_path']}"
+        )
     return {
         "name": cart_item_data["product"]["name"],
         "size_name": cart_item_data["product"]["size_name"],
         "total_price": f"{total_price:.2f}",
         "quantity": quantity,
-        "photo_s3_url": photo_s3_url,
-        "check_image": check_image,
+        "photo_url": photo_url,
     }
 
 
@@ -269,7 +269,7 @@ carts_window = Window(
 
 # Окно отображения продукта в корзине
 cart_item_window = Window(
-    StaticMedia(url=Format("{photo_s3_url}"), when="check_image"),
+    StaticMedia(url=Format("{photo_url}"), when="photo_url"),
     Format("🏷️ Наименование: {name} "),
     Format("📏 Размер: {size_name}"),
     Format("💰 Общая цена: {total_price} руб."),
