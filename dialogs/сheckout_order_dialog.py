@@ -129,12 +129,11 @@ input_delivery_type = Window(
 
 # Окно финального подтверждения заказа
 confirmation_order_window = Window(
-    Format("📜 Состав заказа:"),
     Format("{error_message}", when="error_message"),
+    Format("📜 Состав заказа:"),
     List(
         Format(
-            """
-            - {item[product][name]} {item[product][size_name]} x {item[quantity]} шт. |  {item[total_price]} руб."""
+            "-{item[product][name]} {item[product][size_name]} x {item[quantity]} шт. | {item[total_price]} руб."
         ),
         items="cart_items",
     ),
