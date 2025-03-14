@@ -59,8 +59,8 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
         async with APIClient(user.email) as api:
             orders = await api.get("/orders/?status=completed")
             for order in orders:
-                created_at_moscow = order.get("created_at_moscow")
-                order["created_at_moscow"] = formatted_date(created_at_moscow)
+                created_at = order.get("created_at")
+                order["created_at"] = formatted_date(created_at)
     except APIError:
         orders = None
     error_message = "История заказов временно недоступна." if orders is None else None
@@ -79,7 +79,7 @@ async def history_order_detail_getter(dialog_manager: DialogManager, **kwargs):
             return {
                 "user_order_id": order["user_order_id"],
                 "order_items": order["order_items"],
-                "created_at_moscow": formatted_date(order["created_at_moscow"]),
+                "created_at": formatted_date(order["created_at"]),
                 "total_amount": order["total_amount"],
                 "delivery_type": order["delivery"]["delivery_type"],
                 "delivery_address": order["delivery"]["delivery_address"],
@@ -89,7 +89,7 @@ async def history_order_detail_getter(dialog_manager: DialogManager, **kwargs):
         return {
             "user_order_id": "-",
             "order_items": [],
-            "created_at_moscow": "-",
+            "created_at": "-",
             "total_amount": 0,
             "delivery_type": "-",
             "delivery_address": "-",
@@ -112,7 +112,7 @@ history_orders_window = Window(
     # если заказов больше 5 выводим меню с пагинацией
     ScrollingGroup(
         Select(
-            Format("📦 Заказ №{item[user_order_id]} от {item[created_at_moscow]}"),
+            Format("📦 Заказ №{item[user_order_id]} от {item[created_at]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -126,7 +126,7 @@ history_orders_window = Window(
     # если заказов меньше либо равно 5 выводим обычный список кнопок
     Group(
         Select(
-            Format("📦 Заказ №{item[user_order_id]} от {item[created_at_moscow]}"),
+            Format("📦 Заказ №{item[user_order_id]} от {item[created_at]}"),
             id="order_button",
             item_id_getter=lambda x: x["id"],
             items="orders",
@@ -148,7 +148,7 @@ history_orders_window = Window(
 history_order_detail_window = Window(
     Format("{error_message}", when="error_message"),
     Format("📦 Заказ №{user_order_id}"),
-    Format("📅 Дата: {created_at_moscow}\n"),
+    Format("📅 Дата: {created_at}\n"),
     Format("📜 Состав заказа:"),
     List(
         Format(
