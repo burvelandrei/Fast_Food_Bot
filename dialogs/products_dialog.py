@@ -263,6 +263,7 @@ product_detail_window = Window(
         text=Const("🛒 Добавить в корзину"),
         id="add_to_cart",
         on_click=add_to_cart_button,
+        when="sizes",
     ),
     SwitchTo(
         text=Const("🔙 Назад"),
