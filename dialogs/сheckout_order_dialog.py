@@ -99,7 +99,7 @@ select_delivery_type = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
-        mode=StartMode.RESET_STACK
+        mode=StartMode.RESET_STACK,
     ),
     state=CheckoutOrderSG.select_delivery_type,
 )
@@ -121,7 +121,7 @@ input_delivery_type = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
-        mode=StartMode.RESET_STACK
+        mode=StartMode.RESET_STACK,
     ),
     state=CheckoutOrderSG.input_delivery_address,
 )
@@ -133,7 +133,8 @@ confirmation_order_window = Window(
     Format("{error_message}", when="error_message"),
     List(
         Format(
-            "- {item[product][name]} x {item[quantity]} шт. |  {item[total_price]} руб."
+            """
+            - {item[product][name]} {item[product][size_name]} x {item[quantity]} шт. |  {item[total_price]} руб."""
         ),
         items="cart_items",
     ),
@@ -164,7 +165,7 @@ confirmation_order_window = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
-        mode=StartMode.RESET_STACK
+        mode=StartMode.RESET_STACK,
     ),
     getter=confirmation_order_getter,
     state=CheckoutOrderSG.confirmation,
@@ -178,7 +179,7 @@ success_checkout = Window(
         text=Const("🔙 Назад в Меню!"),
         id="back_to_menu",
         state=MenuSG.menu,
-        mode=StartMode.RESET_STACK
+        mode=StartMode.RESET_STACK,
     ),
     state=CheckoutOrderSG.success_checkout,
 )

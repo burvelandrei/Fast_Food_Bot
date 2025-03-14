@@ -39,23 +39,25 @@ async def cart_item_button(
     callback: CallbackQuery,
     widget: Select,
     dialog_manager: DialogManager,
-    item_id: int,
+    item_id: str,
 ):
-    dialog_manager.dialog_data["product_id"] = item_id
+    product_id, size_id = map(int, item_id.split("_"))
+    dialog_manager.dialog_data["product_id"] = product_id
+    dialog_manager.dialog_data["size_id"] = size_id
     if "cart_item_data" not in dialog_manager.dialog_data:
         tg_id = str(dialog_manager.event.from_user.id)
         session = dialog_manager.middleware_data["session"]
         user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
         try:
             async with APIClient(user.email) as api:
-                cart_item = await api.get(f"/carts/{item_id}/")
-                dialog_manager.dialog_data["cart_item_data"] = cart_item
-                dialog_manager.dialog_data["quantity"] = cart_item["quantity"]
-                dialog_manager.dialog_data["total_price"] = float(
-                    cart_item["total_price"]
-                )
-                dialog_manager.dialog_data["price_product"] = float(
-                    cart_item["product"]["final_price"]
+                cart_item = await api.get(f"/carts/{product_id}/{size_id}/")
+                dialog_manager.dialog_data.update(
+                    {
+                        "cart_item_data": cart_item,
+                        "quantity": cart_item["quantity"],
+                        "total_price": float(cart_item["total_price"]),
+                        "price_product": float(cart_item["product"]["final_price"]),
+                    }
                 )
                 await dialog_manager.switch_to(state=CartsSG.cart_item)
         except APIError:
@@ -68,8 +70,12 @@ async def increase_quantity(
 ):
     current_quantity = dialog_manager.dialog_data.get("quantity")
     price_product = dialog_manager.dialog_data.get("price_product")
-    dialog_manager.dialog_data["quantity"] = current_quantity + 1
-    dialog_manager.dialog_data["total_price"] = price_product * (current_quantity + 1)
+    dialog_manager.dialog_data.update(
+        {
+            "quantity": current_quantity + 1,
+            "total_price": price_product * (current_quantity + 1),
+        }
+    )
     await dialog_manager.update({})
 
 
@@ -81,8 +87,12 @@ async def decrease_quantity(
     price_product = dialog_manager.dialog_data.get("price_product")
     # уменьшаем количество но не меньше 1
     new_quantity = max(1, current_quantity - 1)
-    dialog_manager.dialog_data["quantity"] = new_quantity
-    dialog_manager.dialog_data["total_price"] = price_product * new_quantity
+    dialog_manager.dialog_data.update(
+        {
+            "quantity": new_quantity,
+            "total_price": price_product * new_quantity,
+        }
+    )
     await dialog_manager.update({})
 
 
@@ -91,6 +101,7 @@ async def update_quantity(
     callback: CallbackQuery, widget: Button, dialog_manager: DialogManager
 ):
     product_id = int(dialog_manager.dialog_data["product_id"])
+    size_id = int(dialog_manager.dialog_data["size_id"])
     tg_id = str(dialog_manager.event.from_user.id)
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
@@ -98,8 +109,8 @@ async def update_quantity(
     data = {"quantity": quantity}
     try:
         async with APIClient(user.email) as api:
-            await api.patch(f"/carts/update/{product_id}/", data=data)
-            cart_item = await api.get(f"/carts/{product_id}/")
+            await api.patch(f"/carts/update/{product_id}/{size_id}/", data=data)
+            cart_item = await api.get(f"/carts/{product_id}/{size_id}/")
             dialog_manager.dialog_data["cart_item_data"] = cart_item
             await callback.answer("Количество продукта обновлено")
             await dialog_manager.update({})
@@ -113,12 +124,13 @@ async def delete_cart_item(
     callback: CallbackQuery, widget: Button, dialog_manager: DialogManager
 ):
     product_id = int(dialog_manager.dialog_data["product_id"])
+    size_id = int(dialog_manager.dialog_data["size_id"])
     tg_id = str(dialog_manager.event.from_user.id)
     session = dialog_manager.middleware_data["session"]
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     try:
         async with APIClient(user.email) as api:
-            await api.delete(f"/carts/{product_id}/")
+            await api.delete(f"/carts/delete/{product_id}/{size_id}/")
             if "cart_item_data" in dialog_manager.dialog_data:
                 del dialog_manager.dialog_data["cart_item_data"]
             if "quantity" in dialog_manager.dialog_data:
@@ -179,6 +191,7 @@ async def cart_item_getter(dialog_manager: DialogManager, **kwargs):
         photo_s3_url = f"{settings.S3_HOST}{settings.S3_BACKET}{cart_item_data['product']['photo_url']}"
     return {
         "name": cart_item_data["product"]["name"],
+        "size_name": cart_item_data["product"]["size_name"],
         "total_price": f"{total_price:.2f}",
         "quantity": quantity,
         "photo_s3_url": photo_s3_url,
@@ -205,9 +218,11 @@ carts_window = Window(
     # если продуктов в корзине больше 5, выводим меню с пагинацией
     ScrollingGroup(
         Select(
-            Format("{item[product][name]} - {item[quantity]}"),
+            Format(
+                "{item[product][name]} {item[product][size_name]} x {item[quantity]}"
+            ),
             id="cart_button",
-            item_id_getter=lambda x: x["product"]["id"],
+            item_id_getter=lambda x: f"{x['product']['id']}_{x['product']['size_id']}",
             items="cart_items",
             on_click=cart_item_button,
         ),
@@ -219,9 +234,11 @@ carts_window = Window(
     # если продуктов в корзине меньше или равно 5, выводим меню с списком
     Group(
         Select(
-            Format("{item[product][name]} х {item[quantity]}шт."),
+            Format(
+                "{item[product][name]} {item[product][size_name]} x {item[quantity]}"
+            ),
             id="cart_button",
-            item_id_getter=lambda x: x["product"]["id"],
+            item_id_getter=lambda x: f"{x['product']['id']}_{x['product']['size_id']}",
             items="cart_items",
             on_click=cart_item_button,
         ),
@@ -253,7 +270,8 @@ carts_window = Window(
 # Окно отображения продукта в корзине
 cart_item_window = Window(
     StaticMedia(url=Format("{photo_s3_url}"), when="check_image"),
-    Format("🏷️ Наименование: {name}"),
+    Format("🏷️ Наименование: {name} "),
+    Format("📏 Размер: {size_name}"),
     Format("💰 Общая цена: {total_price} руб."),
     Group(
         Button(
