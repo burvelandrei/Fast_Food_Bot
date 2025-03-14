@@ -27,7 +27,7 @@ async def current_order_button(
     callback: CallbackQuery,
     widget: Select,
     dialog_manager: DialogManager,
-    item_id: int,
+    item_id: str,
 ):
     dialog_manager.dialog_data["order_id"] = item_id
     await dialog_manager.switch_to(state=CurrentOrdersSG.order_detail)
