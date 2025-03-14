@@ -2,6 +2,7 @@ from aiogram.types import Message
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
+from aiogram_dialog.widgets.kbd import SwitchTo
 from email_validator import validate_email, EmailNotValidError
 from dialogs.states import StartSG
 from services.api_client import APIClient, APIError
@@ -30,16 +31,21 @@ async def correct_email(
     db_user = await UserDO.get_by_email(email=text, session=session)
     if db_user:
         await message.answer("Пользователь с такой почтой уже присутствует!")
-        await dialog_manager.switch_to(state=StartSG.start)
+        await dialog_manager.switch_to(state=StartSG.input_email)
     else:
         try:
             async with APIClient() as api:
                 await api.post("/users/register/", data=data)
-                await message.answer("Перейди в свою почту и подтверди её")
+                await message.answer(
+                    f"Для завершения регистрации, пожалуйста, подтвердите ваш"
+                    f" email, перейдя по ссылке в письме."
+                )
                 await dialog_manager.done()
         except APIError:
-            await message.answer("Произошла неизвестная ошибка. Давай попробуем ещё раз.")
-            await dialog_manager.switch_to(state=StartSG.start)
+            await message.answer(
+                "Произошла неизвестная ошибка. Давай попробуем ещё раз."
+            )
+            await dialog_manager.switch_to(state=StartSG.input_email)
 
 
 # Хэндлер для обработки невалидного email
@@ -47,19 +53,19 @@ async def incorrect_email(
     message: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str
 ):
     await message.answer("Введена некорректная почта!")
-    await dialog_manager.switch_to(state=StartSG.start)
+    await dialog_manager.switch_to(state=StartSG.input_email)
 
 
-start_window = Window(
+input_email_window = Window(
     Const("Введи свою почту"),
     TextInput(
-        id="email_input",
+        id="input_email",
         type_factory=check_email,
         on_success=correct_email,
         on_error=incorrect_email,
     ),
-    state=StartSG.start,
+    state=StartSG.input_email,
 )
 
 
-dialog = Dialog(start_window)
+dialog = Dialog(input_email_window)

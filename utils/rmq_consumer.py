@@ -1,8 +1,6 @@
 import aio_pika
 import json
 from aiogram import Bot
-from aiogram.types import Chat, User
-from aiogram.types import Message
 from aiogram_dialog import BgManagerFactory
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.operations import UserDO

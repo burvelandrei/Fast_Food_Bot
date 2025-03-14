@@ -20,7 +20,7 @@ async def start_handler(
     if db_user:
         await dialog_manager.start(state=MenuSG.menu, mode=StartMode.RESET_STACK)
     else:
-        await dialog_manager.start(state=StartSG.start, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(state=StartSG.input_email, mode=StartMode.RESET_STACK)
 
 
 # Хэндлер на /menu для вызова меню навигации

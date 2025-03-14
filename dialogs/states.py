@@ -2,7 +2,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class StartSG(StatesGroup):
-    start = State()
+    input_email = State()
 
 
 class MenuSG(StatesGroup):
