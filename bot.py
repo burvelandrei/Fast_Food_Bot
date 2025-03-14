@@ -37,7 +37,7 @@ async def main() -> None:
         token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML")
     )
     storage = RedisStorage.from_url(
-        f'redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0',
+        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0",
         key_builder=DefaultKeyBuilder(with_destiny=True),
     )
     dp: Dispatcher = Dispatcher(storage=storage)
@@ -47,7 +47,6 @@ async def main() -> None:
 
     # Добавляем миддлварь логгирования
     dp.update.middleware(DBSessionMiddleware(AsyncSessionLocal))
-
 
     # Регистриуем роутеры в диспетчере
     dp.include_router(user_handler.router)
@@ -63,7 +62,9 @@ async def main() -> None:
 
     asyncio.create_task(
         listen_for_confirmations(
-            bot=bot, session=AsyncSessionLocal(), dialog_bg_factory=dialog_bg_factory
+            bot=bot,
+            session=AsyncSessionLocal(),
+            dialog_bg_factory=dialog_bg_factory,
         )
     )
     # Пропускаем накопившиеся апдейты и запускаем polling

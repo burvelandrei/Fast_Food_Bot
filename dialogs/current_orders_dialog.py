@@ -134,7 +134,9 @@ current_order_detail_window = Window(
     Format("📅 Дата: {created_at_moscow}\n"),
     Format("📜 Состав заказа:"),
     List(
-        Format("- {item[name]} x {item[quantity]} шт. |  {item[total_price]} руб."),
+        Format(
+            "- {item[name]} {item[size_name]} x {item[quantity]} шт. |  {item[total_price]} руб."
+        ),
         items="order_items",
     ),
     Format("\n💰  Итоговая сумма: {total_amount} руб.\n"),
