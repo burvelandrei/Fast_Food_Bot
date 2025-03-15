@@ -15,6 +15,12 @@ from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
 
+DELIVERY_TYPE_TRANSLATIONS = {
+    "pickup": "🚶 Самовывоз",
+    "courier": "🚚 Доставка курьером",
+}
+
+
 # Функция для форматирования даты и времени в читаемый формат
 def formatted_date(date: str):
     dt = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
@@ -57,7 +63,7 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
     user = await UserDO.get_by_tg_id(tg_id=tg_id, session=session)
     try:
         async with APIClient(user.email) as api:
-            orders = await api.get("/orders/?status=completed")
+            orders = await api.get("/orders/history/")
             for order in orders:
                 created_at = order.get("created_at")
                 order["created_at"] = formatted_date(created_at)
@@ -81,7 +87,9 @@ async def history_order_detail_getter(dialog_manager: DialogManager, **kwargs):
                 "order_items": order["order_items"],
                 "created_at": formatted_date(order["created_at"]),
                 "total_amount": order["total_amount"],
-                "delivery_type": order["delivery"]["delivery_type"],
+                "delivery_type": DELIVERY_TYPE_TRANSLATIONS[
+                    order["delivery"]["delivery_type"]
+                ],
                 "delivery_address": order["delivery"]["delivery_address"],
                 "error_message": None,
             }
@@ -157,13 +165,7 @@ history_order_detail_window = Window(
         items="order_items",
     ),
     Format("\n💰  Итоговая сумма: {total_amount} руб.\n"),
-    Case(
-        {
-            "pickup": Const("Способ доставки: 🚶 Самовывоз"),
-            "courier": Const("Способ доставки: 🚚 Доставка курьером"),
-        },
-        selector=lambda data, *_: data["delivery_type"],
-    ),
+    Format("Способ доставки: {delivery_type}"),
     Format(
         "Адрес для доставки: {delivery_address}",
         when="delivery_address",
