@@ -1,37 +1,51 @@
 services:
-  app:
-    image: ${{ DOCKER_HUB_USERNAME }}/fastfood-bot:latest
+  bot:
+    image: ${DOCKER_HUB_USERNAME}/fastfood-bot:latest
     container_name: fastfood-bot
     restart: always
     volumes:
-      - logs_volume:/app/logs
+      - ./logs:/bot/logs
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file: .env
 
 
-  db:
+  db_bot:
     image: postgres:15
-    container_name: postgres_db
+    container_name: postgres_db_bot
     restart: always
     env_file: .env
     environment:
-      POSTGRES_USER: ${{ DB_USER }}
-      POSTGRES_PASSWORD: ${{ DB_PASSWORD }}
-      POSTGRES_DB: ${{ DB_NAME }}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5434:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data_bot:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  redis:
+  redis_bot:
     image: redis:7
-    container_name: redis
+    container_name: redis_bot
     restart: always
     ports:
-      - "6380:6379"
+      - "6381:6379"
+    volumes:
+      - redis_data_bot:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  pg_data:
-  logs_volume:
+  pg_data_bot:
+  redis_data_bot:

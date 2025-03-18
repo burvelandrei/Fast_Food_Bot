@@ -1,11 +1,11 @@
-FROM python:3.12
+FROM python:3.12.0-slim
+
+WORKDIR /bot
 
 COPY requirements.txt .
 
-WORKDIR /app
+RUN pip install -r requirements.txt
 
 COPY . .
 
-RUN pip install -r requirements.txt
-
-CMD ["sh", "-c", "sleep 10 && alembic upgrade head && python bot.py"]
+CMD ["sh", "-c", "alembic upgrade head && python bot.py"]
