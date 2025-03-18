@@ -1,0 +1,65 @@
+name: CI (Docker build and push)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      SECRET_KEY_BOT: ${{ secrets.SECRET_KEY_BOT }}
+      ALGORITHM: ${{ secrets.ALGORITHM }}
+      S3_HOST: ${{ secrets.S3_HOST }}
+      S3_BACKET: ${{ secrets.S3_BACKET }}
+      API_HOST: ${{ secrets.API_HOST }}
+      API_PORT: ${{ secrets.API_PORT }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      RMQ_HOST: ${{ secrets.RMQ_HOST }}
+      RMQ_PORT: ${{ secrets.RMQ_PORT }}
+      RMQ_USER: ${{ secrets.RMQ_USER }}
+      RMQ_PASSWORD: ${{ secrets.RMQ_PASSWORD }}
+
+    steps:
+      - name: Клонирование репозитория
+        uses: actions/checkout@v4
+
+      - name: Установка Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.0"
+
+      - name: Установка зависимостей
+        run: |
+          pip install -r requirements.txt
+
+      - name: Проверка кода с flake8
+        run: |
+          pip install flake8
+          flake8 . --count --max-line-length=80 --statistics
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Клонирование репозитория
+        uses: actions/checkout@v4
+
+      - name: Вход в Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      - name: Сборка и пуш Docker образа
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/fastfood-bot:latest .
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/fastfood-bot:latest

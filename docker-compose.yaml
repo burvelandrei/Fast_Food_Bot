@@ -32,20 +32,6 @@ services:
     ports:
       - "6380:6379"
 
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    restart: always
-    env_file: .env
-    environment:
-      RABBITMQ_DEFAULT_USER: ${{ RMQ_USER }}
-      RABBITMQ_DEFAULT_PASS: ${{ RMQ_PASSWORD }}
-    ports:
-      - "5674:5672"
-      - "15674:15672"
-
-
 volumes:
   pg_data:
   logs_volume:
