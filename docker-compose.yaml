@@ -6,9 +6,9 @@ services:
     volumes:
       - ./logs:/bot/logs
     depends_on:
-      db:
+      db_bot:
         condition: service_healthy
-      redis:
+      redis_bot:
         condition: service_healthy
     env_file: .env
 
