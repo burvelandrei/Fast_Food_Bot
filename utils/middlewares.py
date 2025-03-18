@@ -2,6 +2,7 @@ from aiogram.types import TelegramObject
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+
 class DBSessionMiddleware(BaseMiddleware):
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]):
         super().__init__()

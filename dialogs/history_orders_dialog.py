@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const, Format, Case, List
@@ -69,7 +69,11 @@ async def history_orders_getter(dialog_manager: DialogManager, **kwargs):
                 order["created_at"] = formatted_date(created_at)
     except APIError:
         orders = None
-    error_message = "История заказов временно недоступна." if orders is None else None
+    error_message = (
+        "История заказов временно недоступна."
+        if orders is None
+        else None
+    )
     return {"orders": orders, "error_message": error_message}
 
 
@@ -129,7 +133,10 @@ history_orders_window = Window(
         id="orders_scroll",
         width=1,
         height=5,
-        when=lambda data, *_: data["orders"] and len(data["orders"]) > 5,
+        when=lambda data, *_: (
+            data["orders"] and
+            len(data["orders"]) > 5
+        ),
     ),
     # если заказов меньше либо равно 5 выводим обычный список кнопок
     Group(
@@ -141,7 +148,10 @@ history_orders_window = Window(
             on_click=history_order_button,
         ),
         width=1,
-        when=lambda data, *_: data["orders"] and len(data["orders"]) <= 5,
+        when=lambda data, *_: (
+            data["orders"] and
+            len(data["orders"]) <= 5
+        ),
     ),
     Cancel(
         text=Const("🔙 Назад в Профиль!"),
@@ -160,7 +170,8 @@ history_order_detail_window = Window(
     Format("📜 Состав заказа:"),
     List(
         Format(
-            "- {item[name]} {item[size_name]} x {item[quantity]} шт. |  {item[total_price]} руб."
+            "- {item[name]} {item[size_name]} "
+            "x {item[quantity]} шт. | {item[total_price]} руб."
         ),
         items="order_items",
     ),

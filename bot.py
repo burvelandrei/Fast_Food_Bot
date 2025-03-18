@@ -34,7 +34,8 @@ async def main() -> None:
 
     # Инициализируем бот, редис и диспетчер
     bot: Bot = Bot(
-        token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML")
+        token=settings.BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode="HTML"),
     )
     storage = RedisStorage.from_url(
         f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0",

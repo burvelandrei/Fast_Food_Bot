@@ -59,7 +59,9 @@ async def product_button(
         photo_url = None
         if product_detail['photo_path']:
             photo_url = (
-                f"{settings.S3_HOST}{settings.S3_BACKET}{product_detail['photo_path']}"
+                f"{settings.S3_HOST}"
+                f"{settings.S3_BACKET}"
+                f"{product_detail['photo_path']}"
             )
         dialog_manager.dialog_data.update(
             {
@@ -68,8 +70,12 @@ async def product_button(
                 "description": product_detail.get("description"),
                 "photo_url": photo_url,
                 "sizes": sizes,
-                "selected_size_id": default_size["id"] if default_size else None,
-                "selected_price": default_size["final_price"] if default_size else "—",
+                "selected_size_id": (
+                    default_size["id"] if default_size else None
+                ),
+                "selected_price": (
+                    default_size["final_price"] if default_size else "—"
+                ),
                 "selected_size_name": (
                     default_size["name"] if default_size else "Не выбран"
                 ),
@@ -141,7 +147,11 @@ async def categories_getter(dialog_manager: DialogManager, **kwargs):
     except APIError:
         categories = []
     dialog_manager.dialog_data["categories"] = categories
-    error_message = "Категории временно недоступны." if not categories else None
+    error_message = (
+        "Категории временно недоступны."
+        if not categories
+        else None
+    )
     return {"categories": categories, "error_message": error_message}
 
 
@@ -172,7 +182,9 @@ async def product_detail_getter(dialog_manager: DialogManager, **kwargs):
         "selected_size_name": dialog_manager.dialog_data.get(
             "selected_size_name", "Не выбран"
         ),
-        "selected_price": dialog_manager.dialog_data.get("selected_price", "—"),
+        "selected_price": (
+            dialog_manager.dialog_data.get("selected_price", "—")
+        ),
     }
 
 
@@ -193,7 +205,10 @@ categories_window = Window(
         id="categories_scroll_menu",
         width=1,
         height=5,
-        when=lambda data, *_: data["categories"] and len(data["categories"]) > 5,
+        when=lambda data, *_: (
+            data["categories"] and
+            len(data["categories"]) > 5
+        ),
     ),
     Group(
         Select(
@@ -205,7 +220,10 @@ categories_window = Window(
         ),
         id="categories_list_menu",
         width=1,
-        when=lambda data, *_: data["categories"] and len(data["categories"]) <= 5,
+        when=lambda data, *_: (
+            data["categories"] and
+            len(data["categories"]) <= 5
+        ),
     ),
     Cancel(
         text=Const("🔙 Назад в Меню!"),
@@ -232,7 +250,10 @@ products_window = Window(
         id="scroll_list_menu",
         width=1,
         height=5,
-        when=lambda data, *_: data["products"] and len(data["products"]) > 5,
+        when=lambda data, *_: (
+            data["products"] and
+            len(data["products"]) > 5
+        ),
     ),
     Group(
         Select(
@@ -244,7 +265,10 @@ products_window = Window(
         ),
         id="products_list_menu",
         width=1,
-        when=lambda data, *_: data["products"] and len(data["products"]) <= 5,
+        when=lambda data, *_: (
+            data["products"] and
+            len(data["products"]) <= 5
+        ),
     ),
     SwitchTo(
         text=Const("🔙 Назад"),

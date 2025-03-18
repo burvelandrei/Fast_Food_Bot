@@ -18,9 +18,13 @@ async def start_handler(
         tg_id=str(message.from_user.id), session=session
     )
     if db_user:
-        await dialog_manager.start(state=MenuSG.menu, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(
+            state=MenuSG.menu, mode=StartMode.RESET_STACK
+        )
     else:
-        await dialog_manager.start(state=StartSG.input_email, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(
+            state=StartSG.input_email, mode=StartMode.RESET_STACK
+        )
 
 
 # Хэндлер на /menu для вызова меню навигации
@@ -32,10 +36,13 @@ async def menu_handler(
         tg_id=str(message.from_user.id), session=session
     )
     if db_user:
-        await dialog_manager.start(state=MenuSG.menu, mode=StartMode.RESET_STACK)
+        await dialog_manager.start(
+            state=MenuSG.menu, mode=StartMode.RESET_STACK
+        )
     else:
         await message.answer(
-            "Вы не прошли этап регистрации! Введите команду /start для регистрации."
+            "Вы не прошли этап регистрации! "
+            "Введите команду /start для регистрации."
         )
 
 

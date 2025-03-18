@@ -56,12 +56,16 @@ async def cart_item_button(
                         "cart_item_data": cart_item,
                         "quantity": cart_item["quantity"],
                         "total_price": float(cart_item["total_price"]),
-                        "price_product": float(cart_item["product"]["final_price"]),
+                        "price_product": float(
+                            cart_item["product"]["final_price"]
+                        ),
                     }
                 )
                 await dialog_manager.switch_to(state=CartsSG.cart_item)
         except APIError:
-            await callback.answer("⚠️ Не удалось загрузить информацию о продукте.")
+            await callback.answer(
+                "⚠️ Не удалось загрузить информацию о продукте."
+            )
 
 
 # Хэндлер кнопки увелечения количества продукта
@@ -109,7 +113,10 @@ async def update_quantity(
     data = {"quantity": quantity}
     try:
         async with APIClient(user.email) as api:
-            await api.patch(f"/carts/update/{product_id}/{size_id}/", data=data)
+            await api.patch(
+                f"/carts/update/{product_id}/{size_id}/",
+                data=data,
+            )
             cart_item = await api.get(f"/carts/{product_id}/{size_id}/")
             dialog_manager.dialog_data["cart_item_data"] = cart_item
             await callback.answer("Количество продукта обновлено")
@@ -172,7 +179,11 @@ async def carts_getter(dialog_manager: DialogManager, **kwargs):
             }
     except APIError:
         cart_items = None
-    error_message = "Не удалось загрузить данные корзины." if not cart_items else None
+    error_message = (
+        "Не удалось загрузить данные корзины."
+        if not cart_items
+        else None
+    )
     return {
         "total_amount": 0,
         "cart_items": cart_items,
@@ -188,7 +199,9 @@ async def cart_item_getter(dialog_manager: DialogManager, **kwargs):
     photo_url = None
     if cart_item_data["product"]['photo_path']:
         photo_url = (
-            f"{settings.S3_HOST}{settings.S3_BACKET}{cart_item_data["product"]['photo_path']}"
+            f"{settings.S3_HOST}"
+            f"{settings.S3_BACKET}"
+            f"{cart_item_data['product']['photo_path']}"
         )
     return {
         "name": cart_item_data["product"]["name"],
@@ -219,33 +232,50 @@ carts_window = Window(
     ScrollingGroup(
         Select(
             Format(
-                "{item[product][name]} {item[product][size_name]} x {item[quantity]}"
+                "{item[product][name]} "
+                "{item[product][size_name]} x "
+                "{item[quantity]}"
             ),
             id="cart_button",
-            item_id_getter=lambda x: f"{x['product']['id']}_{x['product']['size_id']}",
+            item_id_getter=lambda x: (
+                f"{x['product']['id']}_"
+                f"{x['product']['size_id']}"
+            ),
             items="cart_items",
             on_click=cart_item_button,
         ),
         id="carts_scroll",
         width=1,
         height=5,
-        when=lambda data, *_: data["cart_items"] and len(data["cart_items"]) > 5,
+        when=lambda data, *_: (
+            data["cart_items"] and
+            len(data["cart_items"]) > 5
+        ),
     ),
     # если продуктов в корзине меньше или равно 5, выводим меню с списком
     Group(
         Select(
             Format(
-                "{item[product][name]} {item[product][size_name]} x {item[quantity]}"
+                "{item[product][name]} "
+                "{item[product][size_name]} x "
+                "{item[quantity]}"
             ),
             id="cart_button",
-            item_id_getter=lambda x: f"{x['product']['id']}_{x['product']['size_id']}",
+            item_id_getter=lambda x: (
+                f"{x['product']['id']}_"
+                f"{x['product']['size_id']}"
+            ),
             items="cart_items",
             on_click=cart_item_button,
         ),
         width=1,
-        when=lambda data, *_: data["cart_items"] and len(data["cart_items"]) <= 5,
+        when=lambda data, *_: (
+            data["cart_items"] and
+            len(data["cart_items"]) <= 5
+        ),
     ),
-    # кнопки Очистить корзину и Перейти к оформлению заказа выводятся только если есть элементы в корзине
+    # кнопки Очистить корзину и Перейти к оформлению заказа
+    # выводятся только если есть элементы в корзине
     Button(
         Const("🗑️ Очистить корзину"),
         id="clear_cart",

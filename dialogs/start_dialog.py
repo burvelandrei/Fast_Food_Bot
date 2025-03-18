@@ -2,7 +2,6 @@ from aiogram.types import Message
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.widgets.text import Const
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
-from aiogram_dialog.widgets.kbd import SwitchTo
 from email_validator import validate_email, EmailNotValidError
 from dialogs.states import StartSG
 from services.api_client import APIClient, APIError
@@ -20,7 +19,10 @@ def check_email(email: str):
 
 # Хэндлер регистрации пользователя
 async def correct_email(
-    message: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str
+    message: Message,
+    widget: ManagedTextInput,
+    dialog_manager: DialogManager,
+    text: str,
 ):
     session = dialog_manager.middleware_data["session"]
     tg_id = str(message.from_user.id)
@@ -37,8 +39,8 @@ async def correct_email(
             async with APIClient() as api:
                 await api.post("/users/register/", data=data)
                 await message.answer(
-                    f"Для завершения регистрации, пожалуйста, подтвердите ваш"
-                    f" email, перейдя по ссылке в письме."
+                    "Для завершения регистрации, пожалуйста, подтвердите ваш"
+                    " email, перейдя по ссылке в письме."
                 )
                 await dialog_manager.done()
         except APIError:
@@ -50,7 +52,10 @@ async def correct_email(
 
 # Хэндлер для обработки невалидного email
 async def incorrect_email(
-    message: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str
+    message: Message,
+    widget: ManagedTextInput,
+    dialog_manager: DialogManager,
+    text: str,
 ):
     await message.answer("Введена некорректная почта!")
     await dialog_manager.switch_to(state=StartSG.input_email)

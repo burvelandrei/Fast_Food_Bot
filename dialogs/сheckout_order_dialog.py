@@ -20,14 +20,21 @@ async def select_delivery_type_button(
     dialog_manager.dialog_data["delivery_type"] = delivery_type
     dialog_manager.dialog_data["delivery_address"] = None
     if delivery_type == "pickup":
-        await dialog_manager.switch_to(state=CheckoutOrderSG.confirmation)
+        await dialog_manager.switch_to(
+            state=CheckoutOrderSG.confirmation
+        )
     elif delivery_type == "courier":
-        await dialog_manager.switch_to(state=CheckoutOrderSG.input_delivery_address)
+        await dialog_manager.switch_to(
+            state=CheckoutOrderSG.input_delivery_address
+        )
 
 
 # Хэндлер для обработки корректного адресса
 async def correct_delivery_address(
-    message: Message, widget: ManagedTextInput, dialog_manager: DialogManager, text: str
+    message: Message,
+    widget: ManagedTextInput,
+    dialog_manager: DialogManager,
+    text: str,
 ):
     dialog_manager.dialog_data["delivery_address"] = text
     await dialog_manager.switch_to(state=CheckoutOrderSG.confirmation)
@@ -49,7 +56,9 @@ async def confirmation_order_button(
     try:
         async with APIClient(user.email) as api:
             await api.post("/orders/confirmation/", data=data)
-            await dialog_manager.switch_to(state=CheckoutOrderSG.success_checkout)
+            await dialog_manager.switch_to(
+                state=CheckoutOrderSG.success_checkout
+            )
     except APIError:
         error_message = "Не удалось оформить заказ."
         await callback.answer(f"⚠️ Ошибка: {error_message}")
@@ -64,7 +73,7 @@ async def confirmation_order_getter(dialog_manager: DialogManager, **kwargs):
     delivery_address = dialog_manager.dialog_data["delivery_address"]
     try:
         async with APIClient(user.email) as api:
-            order = await api.get(f"/carts/")
+            order = await api.get("/carts/")
             return {
                 "cart_items": order["cart_items"],
                 "total_amount": order["total_amount"],
@@ -133,7 +142,8 @@ confirmation_order_window = Window(
     Format("📜 Состав заказа:"),
     List(
         Format(
-            "-{item[product][name]} {item[product][size_name]} x {item[quantity]} шт. | {item[total_price]} руб."
+            "-{item[product][name]} {item[product][size_name]} "
+            "x {item[quantity]} шт. | {item[total_price]} руб."
         ),
         items="cart_items",
     ),
