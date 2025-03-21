@@ -7,7 +7,7 @@ from utils.logger import logging_config
 
 
 logging.config.dictConfig(logging_config)
-logger = logging.getLogger("db_operations")
+logger = logging.getLogger("db_operations_bot")
 
 
 class UserDO:

@@ -46,7 +46,7 @@ async def main() -> None:
     # Настраиваем кнопку Menu бота
     await set_main_menu(bot)
 
-    # Добавляем миддлварь логгирования
+    # Добавляем миддлварь для сессий к БД
     dp.update.middleware(DBSessionMiddleware(AsyncSessionLocal))
 
     # Регистриуем роутеры в диспетчере

@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 class DBSessionMiddleware(BaseMiddleware):
+    """Мидлварь для создания сессии базы данных"""
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]):
         super().__init__()
         self.session_maker = session_maker

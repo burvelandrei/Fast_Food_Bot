@@ -35,6 +35,7 @@ class APIClient:
         await self.session.close()
 
     async def get(self, endpoint: str):
+        """Отправляет GET-запрос к API."""
         url = self.domain + endpoint
         try:
             async with self.session.get(url) as response:
@@ -59,6 +60,7 @@ class APIClient:
             endpoint:
             str, data: Optional[Dict[str, Any]] = None
     ):
+        """Отправляет POST-запрос к API."""
         url = self.domain + endpoint
         try:
             async with self.session.post(url, json=data) as response:
@@ -83,6 +85,7 @@ class APIClient:
             endpoint: str,
             data: Optional[Dict[str, Any]] = None
     ):
+        """Отправляет PATCH-запрос к API."""
         url = self.domain + endpoint
         try:
             async with self.session.patch(url, json=data) as response:
@@ -107,6 +110,7 @@ class APIClient:
             raise APIError(f"Network error: {e}")
 
     async def delete(self, endpoint: str):
+        """Отправляет DELETE-запрос к API."""
         url = self.domain + endpoint
         try:
             async with self.session.delete(url) as response:
