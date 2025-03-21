@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     GF_SECURITY_ADMIN_USER: str
     GF_SECURITY_ADMIN_PASSWORD: str
-    
+
     MAIN_MENU_BOT: dict = {
         "/start": "Старт бота и регистрация",
         "/menu": "Главное меню",
