@@ -29,6 +29,8 @@ jobs:
       RMQ_PORT: ${{ secrets.RMQ_PORT }}
       RMQ_USER: ${{ secrets.RMQ_USER }}
       RMQ_PASSWORD: ${{ secrets.RMQ_PASSWORD }}
+      GF_SECURITY_ADMIN_USER: ${{ secrets.GF_SECURITY_ADMIN_USER }}
+      GF_SECURITY_ADMIN_PASSWORD: ${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}
 
     steps:
       - name: Клонирование репозитория
