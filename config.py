@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     RMQ_USER: str
     RMQ_PASSWORD: str
 
+    GRAFANA_USER: str
+    GRAFANA_PASSWORD: str
+
     MAIN_MENU_BOT: dict = {
         "/start": "Старт бота и регистрация",
         "/menu": "Главное меню",

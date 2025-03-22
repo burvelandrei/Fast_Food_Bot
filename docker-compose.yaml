@@ -52,9 +52,44 @@ services:
     networks:
       - fastfood-network
 
+  loki_bot:
+    image: grafana/loki:latest
+    ports:
+      - "3102:3100"
+    volumes:
+      - loki_data_bot:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - fastfood-network
+
+  promtail_bot:
+    image: grafana/promtail:latest
+    volumes:
+      - ./logs:/logs
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+      - promtail_data_bot:/tmp
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - fastfood-network
+
+  grafana_bot:
+    image: grafana/grafana:latest
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    volumes:
+      - grafana_data_bot:/var/lib/grafana
+    networks:
+      - fastfood-network
+
 volumes:
   pg_data_bot:
   redis_data_bot:
+  loki_data_bot:
+  promtail_data_bot:
+  grafana_data_bot:
 
 networks:
   fastfood-network:

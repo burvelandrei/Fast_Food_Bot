@@ -29,6 +29,9 @@ jobs:
       RMQ_PORT: ${{ secrets.RMQ_PORT }}
       RMQ_USER: ${{ secrets.RMQ_USER }}
       RMQ_PASSWORD: ${{ secrets.RMQ_PASSWORD }}
+      GRAFANA_USER: ${{ secrets.GRAFANA_USER }}
+      GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
+
 
     steps:
       - name: Клонирование репозитория
