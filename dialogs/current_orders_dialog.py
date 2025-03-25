@@ -14,11 +14,11 @@ from services.api_client import APIClient, APIError
 from db.operations import UserDO
 
 
-ORDER_STATUS_TRANSLATIONS = {
-    "created": "🆕 Создан",
-    "cooking": "👨‍🍳 Готовится",
-    "ready": "✅ Приготовлен",
-    "delivering": "🚚 Доставляется",
+ORDER_STATUSES_PERCENT = {
+    "created": 20,
+    "cooking": 40,
+    "ready": 60,
+    "delivering": 80,
 }
 
 
@@ -33,6 +33,15 @@ def formatted_date(date: str):
     dt = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
     formatted_date = dt.strftime("%d.%m.%Y %H:%M")
     return formatted_date
+
+
+# Формирует строку для proress bar
+def get_status_progress(status: str):
+    total_blocks = 10
+    progress = ORDER_STATUSES_PERCENT.get(status)
+    filled_blocks = int((progress / 100) * total_blocks)
+    bar = "🟩" * filled_blocks + "⬜" * (total_blocks - filled_blocks)
+    return f"{bar} {progress}%"
 
 
 # Хэндлер обработки нажотой кнопки выполненного заказа
@@ -85,7 +94,7 @@ async def current_order_detail_getter(dialog_manager: DialogManager, **kwargs):
                     order["delivery"]["delivery_type"]
                 ],
                 "delivery_address": order["delivery"]["delivery_address"],
-                "status": ORDER_STATUS_TRANSLATIONS[order["status"]],
+                "status": get_status_progress(order["status"]),
                 "error_message": None,
             }
     except APIError:
@@ -159,7 +168,8 @@ current_order_detail_window = Window(
     Format("{error_message}", when="error_message"),
     Format("📦 Заказ №{user_order_id}"),
     Format("📅 Дата: {created_at}"),
-    Format("📊 Статус заказа: {status}\n"),
+    Format("📊 Статус заказа:"),
+    Format("{status}\n"),
     Format("📜 Состав заказа:"),
     List(
         Format(
